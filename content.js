@@ -40,7 +40,7 @@ window.addEventListener('focus', () => {
   clearTimeout(window.blurPreviewTimer);
   window.blurPreviewTimer = setTimeout(() => {
     if (!document.hidden && document.hasFocus()) applyBlur(false);
-  }, 1000);
+  }, 16);
 });
 
 // --- UI INJECTION LOGIC ---
