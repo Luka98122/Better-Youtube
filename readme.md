@@ -1,46 +1,61 @@
-# YouTube Auto-Blur Pro
+# Better YouTube (v2.0)
 
-A Chrome extension designed to automatically blur YouTube videos when the tab loses focus or is hidden. This ensures privacy and minimizes distractions when switching between tasks or windows.
+A comprehensive focus and layout suite for YouTube. This extension is designed to eliminate addictive UI elements, improve video viewing ergonomics, and protect focus by blurring playback when the user is not actively engaged with the tab.
 
 ---
 
 ## Features
 
-* **Auto-Blur on Focus Loss**: The video immediately blurs when you click away from the tab or switch windows.
-* **Visibility Handling**: Blurs the video when the tab is hidden and unblurs it with a slight delay when returning to ensure a smooth transition.
-* **Customizable Intensity**: Adjust the blur strength from 0px to 100px using a range slider in the extension popup.
-* **Native UI Integration**: Injects a custom toggle button directly into the YouTube watch page, located to the left of the Like/Dislike segment.
-* **Performance Optimized**: Uses local storage for settings and efficient event listeners to avoid hitting Chrome API quotas.
-* **Ubuntu-Inspired UI**: The popup features a dark-themed interface with a distinctive orange accent.
+### Blur and Privacy
+* **Automated Focus Blur**: Blurs the video player immediately when the browser tab loses focus or is hidden.
+* **In-Player Toggle**: Injects a native-styled button into the YouTube action bar to toggle the global blur state.
+* **Adjustable Intensity**: Provides a range slider (0px to 100px) in the popup to customize the strength of the blur effect.
+
+### Productivity and Discipline
+* **Home Feed Blocking**: Removes the recommendation grid from the home page and replaces it with a focus prompt: "Do you really need to be on here?"
+* **Temporary Override**: Includes an optional button to reveal the home feed for one minute before automatically re-hiding it.
+* **Hardcore Mode**: A setting to disable the "Show anyway" button, preventing any bypass of the home feed block.
+* **Sidebar Cleaning**: Hides the "Watch Next" recommended video sidebar to prevent rabbit-hole browsing.
+
+### Layout Optimization
+* **Sidebar Comments**: Relocates the comment section to the right-hand sidebar.
+* **Independent Scrolling**: Configures the sidebar to scroll independently of the main video, allowing users to read comments without the video scrolling out of view.
 
 ---
 
 ## Installation
 
-1. Clone or download this repository to your local machine.
-2. Open Chrome and navigate to chrome://extensions/.
-3. Enable **Developer mode** using the toggle in the top right corner.
-4. Click **Load unpacked**.
-5. Select the directory containing the extension files.
+1. Download the project files to a local directory.
+2. Open Google Chrome and go to `chrome://extensions/`.
+3. Enable **Developer mode** using the toggle in the top right.
+4. Click **Load unpacked** and select the folder containing the extension.
+5. It is recommended to pin the extension to the toolbar for easy access to the settings submenus.
 
 ---
 
 ## File Structure
 
-* **manifest.json**: Extension configuration and permissions.
-* **content.js**: Handles the blur logic, DOM injection for the toggle button, and YouTube UI observers.
-* **popup.html / popup.js**: The user interface for adjusting blur intensity settings.
-* **README.md**: Documentation for the project.
+* **manifest.json**: Configuration file set to `document_start` to ensure UI elements are hidden before they can flicker onto the screen.
+* **content.js**: The core logic engine that manages DOM manipulation, focus events, and the mutation observer.
+* **popup.html / popup.js**: A categorized, accordion-style interface for managing Blur, Layout, and Productivity settings.
 
 ---
 
 ## Technical Details
 
-### Blur Logic
-The extension monitors the window blur and focus events, as well as the document visibilitychange event. A timeout is utilized during the focus event to prevent flickering during rapid tab switching.
+### Resilient Initialization
+To handle YouTube's Single Page Application (SPA) architecture, the extension uses a recursive `try/catch` loop within the initialization phase. This ensures that the MutationObserver successfully attaches to the DOM root even if the script executes before the browser has fully initialized the Document Node.
 
-### UI Injection
-A MutationObserver is used in content.js to detect when YouTube's dynamic menu elements are rendered. Once the target container (#top-level-buttons-computed) is available, the custom button is injected while maintaining the look and feel of YouTube's native tonal button style.
+### Performance and Stability
+The script utilizes an `isApplying` guard variable to prevent infinite loops. Since the extension actively modifies the DOM (such as moving the comment section), this guard ensures that the observer does not re-trigger the logic based on the extension's own changes.
 
-### Storage
-Settings are persisted using chrome.storage.local, avoiding the strict write-frequency limits associated with chrome.storage.sync.
+### Layout Engineering
+The comment-swapping feature uses dynamic CSS calculations (`calc(100vh - 70px)`) to set the sidebar height relative to the viewport. By setting `overflow-y: auto`, the sidebar becomes a localized scroll container, maintaining the video's fixed position.
+
+### Storage and Synchronization
+All user preferences are stored using `chrome.storage.local`. This provides higher rate limits than the sync alternative and ensures that settings are applied instantly across all open YouTube tabs via message passing.
+
+---
+
+## License
+MIT

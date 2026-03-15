@@ -45,44 +45,67 @@ function applyAllFeatures() {
   
   // Logic: Hide if the setting is ON AND we aren't in a temporary override
   if (settings.hideHome && !isHomeOverrideActive) {
-    if (homeGrid && homeGrid.style.display !== 'none') homeGrid.style.display = 'none';
+    // Hide the actual video grid
+    if (homeGrid && homeGrid.style.display !== 'none') {
+      homeGrid.style.display = 'none';
+    }
     
-    if (homeBrowse && !document.getElementById(messageId)) {
-      const messageDiv = document.createElement('div');
-      messageDiv.id = messageId;
-      messageDiv.style.cssText = `
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        height: 70vh; width: 100%; color: var(--yt-spec-text-primary);
-        font-family: "Roboto", sans-serif; text-align: center;
-      `;
+    // Inject or update the focus message
+    if (homeBrowse) {
+      let messageDiv = document.getElementById(messageId);
       
+      if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.id = messageId;
+        messageDiv.style.cssText = `
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          height: 70vh; width: 100%; color: var(--yt-spec-text-primary);
+          font-family: "Roboto", sans-serif; text-align: center;
+        `;
+        homeBrowse.prepend(messageDiv);
+      }
+
+      // Determine if the "Show Anyway" button should exist
+      const overrideBtnHtml = settings.disableHomeOverride 
+        ? '' 
+        : `<button id="temp-show-feed" style="margin-top: 30px; background: rgba(255,255,255,0.05); border: 1px solid #444; color: #888; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s;">Show feed anyway (1 minute)</button>`;
+
       messageDiv.innerHTML = `
         <h1 style="font-size: 32px; margin-bottom: 10px; opacity: 0.9;">Do you really need to be on here?</h1>
         <p style="font-size: 18px; opacity: 0.6;">Focus on what matters. Your home feed is disabled.</p>
-        <button id="temp-show-feed" style="margin-top: 30px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #aaa; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s;">Show feed anyway (1 minute)</button>
+        ${overrideBtnHtml}
       `;
-      
-      messageDiv.querySelector('#temp-show-feed').onclick = () => {
-        isHomeOverrideActive = true; // Trigger the override
-        isApplying = false; // Reset guard
-        applyAllFeatures(); // Re-run to show the grid
-        
-        // Automatically re-hide after 60 seconds
-        setTimeout(() => {
-          isHomeOverrideActive = false;
-          applyAllFeatures();
-        }, 60000);
-      };
 
-      homeBrowse.prepend(messageDiv);
-    } else if (document.getElementById(messageId)) {
-      document.getElementById(messageId).style.display = 'flex';
+      // Re-attach listener if the button was just created
+      const btn = messageDiv.querySelector('#temp-show-feed');
+      if (btn) {
+        btn.onclick = () => {
+          isHomeOverrideActive = true;
+          isApplying = false; // Reset guard to allow immediate UI change
+          applyAllFeatures();
+          
+          setTimeout(() => {
+            isHomeOverrideActive = false;
+            applyAllFeatures();
+          }, 60000);
+        };
+        
+        // Hover effect
+        btn.onmouseenter = () => btn.style.background = 'rgba(255,255,255,0.1)';
+        btn.onmouseleave = () => btn.style.background = 'rgba(255,255,255,0.05)';
+      }
+      
+      messageDiv.style.display = 'flex';
     }
   } else {
     // Restore feed if override is active OR setting is OFF
-    if (homeGrid && homeGrid.style.display === 'none') homeGrid.style.display = '';
+    if (homeGrid && homeGrid.style.display === 'none') {
+      homeGrid.style.display = '';
+    }
     const existingMsg = document.getElementById(messageId);
-    if (existingMsg) existingMsg.style.display = 'none';
+    if (existingMsg) {
+      existingMsg.style.display = 'none';
+    }
   }
 
   // 3. HIDE SIDEBAR

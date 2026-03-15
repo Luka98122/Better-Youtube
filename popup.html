@@ -1,30 +1,92 @@
-<style>
-  body { width: 220px; padding: 15px; font-family: 'Roboto', sans-serif; background: #0f0f0f; color: white; }
-  .option { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-  input[type="range"] { width: 100%; margin-top: 5px; }
-  hr { border: 0; border-top: 1px solid #333; margin: 15px 0; }
-</style>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --bg-color: #0f0f0f;
+      --card-bg: #1f1f1f;
+      --accent: #e95420;
+      --text: #f1f1f1;
+      --text-dim: #aaa;
+    }
+    body { 
+      width: 250px; padding: 15px; font-family: 'Roboto', sans-serif; 
+      background: var(--bg-color); color: var(--text); margin: 0;
+    }
+    h3 { margin-top: 0; color: var(--accent); font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    
+    /* Accordion Styles */
+    details { background: var(--card-bg); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+    summary { 
+      padding: 12px; cursor: pointer; font-weight: 500; font-size: 14px; 
+      list-style: none; display: flex; justify-content: space-between; align-items: center;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: '▸'; color: var(--text-dim); transition: 0.2s; }
+    details[open] summary::after { transform: rotate(90deg); }
+    
+    .content { padding: 0 12px 12px 12px; border-top: 1px solid #2a2a2a; padding-top: 10px; }
+
+    /* Input Styles */
+    .option { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; margin-top: 8px; }
+    input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); width: 16px; height: 16px; }
+    
+    .val-label { color: var(--accent); font-weight: bold; }
+    .hint { font-size: 11px; color: var(--text-dim); margin-top: -5px; margin-bottom: 10px; display: block; }
+  </style>
+</head>
+<body>
 
 <h3>Better YouTube</h3>
-<div class="option">
-  <label>Blur Intensity</label>
-  <span id="val">20</span>px
-</div>
-<input type="range" id="blurRange" min="0" max="100" value="20">
 
-<hr>
+<details open>
+  <summary>Blur Settings</summary>
+  <div class="content">
+    <div class="option">
+      <label>Global Extension State</label>
+      <input type="checkbox" id="isExtensionEnabled">
+    </div>
+    <span class="hint">Toggle the auto-blur feature entirely.</span>
+    
+    <div class="option">
+      <label>Intensity</label>
+      <span class="val-label"><span id="blurValDisplay">20</span>px</span>
+    </div>
+    <input type="range" id="blurRange" min="0" max="100" value="20">
+  </div>
+</details>
 
-<div class="option">
-  <label>Hide Home Feed</label>
-  <input type="checkbox" id="hideHome">
-</div>
-<div class="option">
-  <label>Hide Sidebar Recs</label>
-  <input type="checkbox" id="hideSidebar">
-</div>
-<div class="option">
-  <label>Comments in Sidebar</label>
-  <input type="checkbox" id="swapComments">
-</div>
+<details>
+  <summary>Layout Settings</summary>
+  <div class="content">
+    <div class="option">
+      <label>Move Comments to Sidebar</label>
+      <input type="checkbox" id="swapComments">
+    </div>
+    <span class="hint">Makes sidebar independently scrollable.</span>
+  </div>
+</details>
+
+<details>
+  <summary>Productivity</summary>
+  <div class="content">
+    <div class="option">
+      <label>Block Home Feed</label>
+      <input type="checkbox" id="hideHome">
+    </div>
+    <div class="option" style="padding-left: 15px; opacity: 0.8;">
+      <label>Hide "Show Anyway" Button</label>
+      <input type="checkbox" id="disableHomeOverride">
+    </div>
+    <div class="option">
+      <label>Hide Recommended Videos</label>
+      <input type="checkbox" id="hideSidebar">
+    </div>
+  </div>
+</details>
 
 <script src="popup.js"></script>
+</body>
+</html>
