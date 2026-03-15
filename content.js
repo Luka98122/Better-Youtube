@@ -1,5 +1,6 @@
 let settings = {};
 let isApplying = false;
+let isHomeOverrideActive = false; // New override flag
 
 // 1. Initial Load
 chrome.storage.local.get(null, (res) => {
@@ -37,18 +38,51 @@ function applyAllFeatures() {
     }
   }
 
-  // 2. HIDE HOME FEED
+  // 2. HIDE HOME FEED & SHOW MESSAGE
   const homeGrid = document.querySelector('ytd-rich-grid-renderer');
   const homeBrowse = document.querySelector('ytd-browse[page-subtype="home"]');
+  const messageId = 'custom-focus-message';
   
-  if (settings.hideHome) {
+  // Logic: Hide if the setting is ON AND we aren't in a temporary override
+  if (settings.hideHome && !isHomeOverrideActive) {
     if (homeGrid && homeGrid.style.display !== 'none') homeGrid.style.display = 'none';
-    if (homeBrowse && homeBrowse.style.display !== 'none') {
-        homeBrowse.style.setProperty('display', 'none', 'important');
+    
+    if (homeBrowse && !document.getElementById(messageId)) {
+      const messageDiv = document.createElement('div');
+      messageDiv.id = messageId;
+      messageDiv.style.cssText = `
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        height: 70vh; width: 100%; color: var(--yt-spec-text-primary);
+        font-family: "Roboto", sans-serif; text-align: center;
+      `;
+      
+      messageDiv.innerHTML = `
+        <h1 style="font-size: 32px; margin-bottom: 10px; opacity: 0.9;">Do you really need to be on here?</h1>
+        <p style="font-size: 18px; opacity: 0.6;">Focus on what matters. Your home feed is disabled.</p>
+        <button id="temp-show-feed" style="margin-top: 30px; background: rgba(255,255,255,0.1); border: 1px solid #444; color: #aaa; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s;">Show feed anyway (1 minute)</button>
+      `;
+      
+      messageDiv.querySelector('#temp-show-feed').onclick = () => {
+        isHomeOverrideActive = true; // Trigger the override
+        isApplying = false; // Reset guard
+        applyAllFeatures(); // Re-run to show the grid
+        
+        // Automatically re-hide after 60 seconds
+        setTimeout(() => {
+          isHomeOverrideActive = false;
+          applyAllFeatures();
+        }, 60000);
+      };
+
+      homeBrowse.prepend(messageDiv);
+    } else if (document.getElementById(messageId)) {
+      document.getElementById(messageId).style.display = 'flex';
     }
   } else {
+    // Restore feed if override is active OR setting is OFF
     if (homeGrid && homeGrid.style.display === 'none') homeGrid.style.display = '';
-    if (homeBrowse && homeBrowse.style.display === 'none') homeBrowse.style.display = '';
+    const existingMsg = document.getElementById(messageId);
+    if (existingMsg) existingMsg.style.display = 'none';
   }
 
   // 3. HIDE SIDEBAR
