@@ -1,93 +1,98 @@
-let blurIntensity = 20;
-let isExtensionEnabled = true;
+let settings = {};
+let isApplying = false;
 
 // 1. Initial Load
-chrome.storage.local.get(['blurAmount', 'isExtensionEnabled'], (result) => {
-  if (result.blurAmount !== undefined) blurIntensity = result.blurAmount;
-  if (result.isExtensionEnabled !== undefined) isExtensionEnabled = result.isExtensionEnabled;
+chrome.storage.local.get(null, (res) => {
+  settings = res;
+  applyAllFeatures();
 });
 
-// 2. Listen for Popup Updates
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.newBlur) {
-    blurIntensity = request.newBlur;
-    if (isExtensionEnabled) triggerBlurLogic(); 
+// 2. Listen for Live Changes
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'UPDATE_SETTINGS') {
+    settings[msg.id] = msg.val;
+    applyAllFeatures();
   }
 });
 
-const applyBlur = (shouldBlur) => {
+// 3. The Feature Logic 
+function applyAllFeatures() {
+  if (isApplying || Object.keys(settings).length === 0) return; 
+  isApplying = true;
+
   const video = document.querySelector('video');
-  if (!video) return;
   
-  if (!isExtensionEnabled) {
-    video.style.filter = 'none';
-    return;
+  // 1. BLUR LOGIC
+  const isHidden = document.hidden || !document.hasFocus();
+  if (video) {
+    const blurValue = (isHidden && settings.blurRange > 0) ? `blur(${settings.blurRange}px)` : 'none';
+    if (video.style.filter !== blurValue) {
+      video.style.transition = 'filter 0.1s linear';
+      video.style.filter = blurValue;
+    }
   }
 
-  video.style.transition = 'filter 0.1s linear';
-  video.style.filter = shouldBlur ? `blur(${blurIntensity}px)` : 'none';
-};
-
-const triggerBlurLogic = () => {
-  applyBlur(document.hidden || !document.hasFocus());
-};
-
-document.addEventListener('visibilitychange', triggerBlurLogic);
-window.addEventListener('blur', () => applyBlur(true));
-window.addEventListener('focus', () => {
-  clearTimeout(window.blurPreviewTimer);
-  window.blurPreviewTimer = setTimeout(() => {
-    if (!document.hidden && document.hasFocus()) applyBlur(false);
-  }, 30); // 30ms is a safe buffer for tab-switching
-});
-
-// --- UI INJECTION ---
-
-const injectToggleButton = () => {
-  if (document.getElementById('custom-autoblur-btn')) return;
-
-  const targetMenu = document.getElementById('top-level-buttons-computed');
-  if (!targetMenu) return;
-
-  const activeBg = '#e95420'; 
-  const inactiveBg = 'var(--yt-spec-badge-chip-background, rgba(255, 255, 255, 0.1))'; 
-
-  const btnContainer = document.createElement('div');
-  btnContainer.id = 'custom-autoblur-btn';
-  btnContainer.style.marginRight = '8px'; 
+  // 2. HIDE HOME FEED
+  const homeGrid = document.querySelector('ytd-rich-grid-renderer');
+  const homeBrowse = document.querySelector('ytd-browse[page-subtype="home"]');
   
-  btnContainer.innerHTML = `
-    <button id="autoblur-toggle-btn" class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m" 
-      style="border-radius: 18px; padding: 0 16px; height: 36px; border: none; cursor: pointer; 
-      background-color: ${isExtensionEnabled ? activeBg : inactiveBg}; 
-      color: #fff; font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 500; 
-      transition: background-color 0.2s ease;">
-      <span id="autoblur-btn-text">Blur: ${isExtensionEnabled ? 'ON' : 'OFF'}</span>
-    </button>
-  `;
-
-  targetMenu.insertBefore(btnContainer, targetMenu.firstChild);
-
-  const btnElement = btnContainer.querySelector('#autoblur-toggle-btn');
-  const textElement = btnContainer.querySelector('#autoblur-btn-text');
-
-  btnElement.addEventListener('click', () => {
-    isExtensionEnabled = !isExtensionEnabled;
-    
-    textElement.innerText = `Blur: ${isExtensionEnabled ? 'ON' : 'OFF'}`;
-    btnElement.style.backgroundColor = isExtensionEnabled ? activeBg : inactiveBg;
-    
-    // Fixed: Ensure this is on its own line
-    chrome.storage.local.set({ isExtensionEnabled });
-    
-    triggerBlurLogic();
-  });
-};
-
-const observer = new MutationObserver(() => {
-  if (document.getElementById('top-level-buttons-computed')) {
-    injectToggleButton();
+  if (settings.hideHome) {
+    if (homeGrid && homeGrid.style.display !== 'none') homeGrid.style.display = 'none';
+    if (homeBrowse && homeBrowse.style.display !== 'none') {
+        homeBrowse.style.setProperty('display', 'none', 'important');
+    }
+  } else {
+    if (homeGrid && homeGrid.style.display === 'none') homeGrid.style.display = '';
+    if (homeBrowse && homeBrowse.style.display === 'none') homeBrowse.style.display = '';
   }
-});
 
-observer.observe(document.body, { childList: true, subtree: true });
+  // 3. HIDE SIDEBAR
+  const sidebarRecs = document.querySelector('ytd-watch-next-secondary-results-renderer');
+  if (sidebarRecs) {
+    const targetDisplay = settings.hideSidebar ? 'none' : '';
+    if (sidebarRecs.style.display !== targetDisplay) sidebarRecs.style.display = targetDisplay;
+  }
+
+  // 4. SWAP COMMENTS
+  if (settings.swapComments && window.location.href.includes('watch')) {
+    const comments = document.querySelector('#comments');
+    const secondaryInner = document.querySelector('#secondary-inner');
+    if (comments && secondaryInner && comments.parentNode !== secondaryInner) {
+      secondaryInner.prepend(comments);
+      comments.style.display = 'block';
+    }
+  }
+
+  setTimeout(() => { isApplying = false; }, 50);
+}
+
+// 4. THE INDESTRUCTIBLE OBSERVER LOGIC
+function startObserver() {
+  try {
+    // Attempt to grab the body or html tag
+    const target = document.body || document.documentElement;
+    
+    // If neither exists yet, force an error to jump to the catch block
+    if (!target) throw new Error("DOM not ready");
+
+    const observer = new MutationObserver(() => {
+      if (!isApplying) applyAllFeatures();
+    });
+    
+    // If Chrome thinks this isn't a Node yet, it will throw the TypeError here
+    observer.observe(target, { childList: true, subtree: true });
+    
+  } catch (error) {
+    // We catch the error silently, wait 50ms, and try again. 
+    // This loops until Chrome finally constructs the Node!
+    setTimeout(startObserver, 50);
+  }
+}
+
+// Start the loop
+startObserver();
+
+// 5. Standard Focus Listeners
+window.addEventListener('blur', () => applyAllFeatures());
+window.addEventListener('focus', () => applyAllFeatures());
+document.addEventListener('visibilitychange', () => applyAllFeatures());
