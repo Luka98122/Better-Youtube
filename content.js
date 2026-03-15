@@ -12,7 +12,7 @@ chrome.storage.local.get(null, (res) => {
 
 // 2. DEBUG Message Listener
 chrome.runtime.onMessage.addListener((msg) => {
-  console.log("DEBUG: Message Received ->", msg); // This tells us IF the message arrived
+  console.log("DEBUG: Message Received ->", msg); 
   
   if (msg.newBlur !== undefined) {
     console.log("DEBUG: Real-time blur update to:", msg.newBlur);
@@ -22,11 +22,15 @@ chrome.runtime.onMessage.addListener((msg) => {
     console.log(`DEBUG: Setting ${msg.id} changed to:`, msg.val);
     settings[msg.id] = msg.val;
     isApplying = false; 
-    applyAllFeatures();
+    if (msg.id === 'blurRange') {
+      showBlurPreview();
+    } else {
+      applyAllFeatures();
+    }
   }
 });
 
-// Helper to show the blur even if the tab is focused (for the slider)
+// Helper to show the blur even if the tab is focused
 function showBlurPreview() {
   const video = document.querySelector('video');
   if (video && settings.isExtensionEnabled) {
@@ -34,8 +38,82 @@ function showBlurPreview() {
     clearTimeout(window.previewTimer);
     window.previewTimer = setTimeout(() => {
       isApplying = false;
-      applyAllFeatures(); // Return to normal auto-blur logic
+      applyAllFeatures(); 
     }, 1000);
+  }
+}
+
+// Helper to inject CSS that turns the vertical list into a grid
+function toggleRecGridStyle(enable) {
+  let styleTag = document.getElementById('custom-rec-grid-style');
+  
+  if (!enable) {
+    if (styleTag) styleTag.innerHTML = '';
+    return;
+  }
+  
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'custom-rec-grid-style';
+    document.head.appendChild(styleTag);
+  }
+  
+  if (styleTag.innerHTML === '') {
+    styleTag.innerHTML = `
+      /* 1. Force the container to take full width of the bottom area */
+      #primary-inner ytd-watch-next-secondary-results-renderer {
+        width: 100% !important;
+        max-width: none !important;
+        margin-top: 30px !important;
+        padding-top: 20px !important;
+        border-top: 1px solid var(--yt-spec-10-percent-layer) !important;
+      }
+
+      style-scope ytd-watch-next-secondary-results-renderer {
+        max-width:70% !important;
+      }
+      
+      /* 2. Force the inner wrapper to be a grid */
+      #primary-inner ytd-watch-next-secondary-results-renderer ytd-item-section-renderer #contents,
+      #primary-inner ytd-watch-next-secondary-results-renderer #items {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+        gap: 16px !important;
+        width: 100% !important;
+      }
+      
+      /* 3. Stack the thumbnails on top of the text */
+      #primary-inner ytd-compact-video-renderer {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        width: 100% !important;
+        min-width: 0 !important; /* Prevents grid blowout */
+      }
+      
+      /* 4. Fix the Thumbnail Constraints */
+      #primary-inner ytd-compact-video-renderer ytd-thumbnail {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 0 0 8px 0 !important;
+      }
+      
+      /* 5. Force Images to scale correctly */
+      #primary-inner ytd-compact-video-renderer ytd-thumbnail img {
+        width: 100% !important;
+        height: auto !important;
+        object-fit: cover !important;
+        aspect-ratio: 16 / 9 !important;
+      }
+      
+      /* 6. Fix Text Container Width */
+      #primary-inner ytd-compact-video-renderer .details.ytd-compact-video-renderer {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding-right: 0 !important;
+      }
+    `;
   }
 }
 
@@ -62,14 +140,11 @@ function applyAllFeatures() {
   const homeBrowse = document.querySelector('ytd-browse[page-subtype="home"]');
   const messageId = 'custom-focus-message';
   
-  // Logic: Hide if the setting is ON AND we aren't in a temporary override
   if (settings.hideHome && !isHomeOverrideActive) {
-    // Hide the actual video grid
     if (homeGrid && homeGrid.style.display !== 'none') {
       homeGrid.style.display = 'none';
     }
     
-    // Inject or update the focus message
     if (homeBrowse) {
       let messageDiv = document.getElementById(messageId);
       
@@ -84,7 +159,6 @@ function applyAllFeatures() {
         homeBrowse.prepend(messageDiv);
       }
 
-      // Determine if the "Show Anyway" button should exist
       const overrideBtnHtml = settings.disableHomeOverride 
         ? '' 
         : `<button id="temp-show-feed" style="margin-top: 30px; background: rgba(255,255,255,0.05); border: 1px solid #444; color: #888; padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s;">Show feed anyway (1 minute)</button>`;
@@ -95,12 +169,11 @@ function applyAllFeatures() {
         ${overrideBtnHtml}
       `;
 
-      // Re-attach listener if the button was just created
       const btn = messageDiv.querySelector('#temp-show-feed');
       if (btn) {
         btn.onclick = () => {
           isHomeOverrideActive = true;
-          isApplying = false; // Reset guard to allow immediate UI change
+          isApplying = false; 
           applyAllFeatures();
           
           setTimeout(() => {
@@ -109,7 +182,6 @@ function applyAllFeatures() {
           }, 60000);
         };
         
-        // Hover effect
         btn.onmouseenter = () => btn.style.background = 'rgba(255,255,255,0.1)';
         btn.onmouseleave = () => btn.style.background = 'rgba(255,255,255,0.05)';
       }
@@ -117,10 +189,9 @@ function applyAllFeatures() {
       messageDiv.style.display = 'flex';
     }
   } else {
-    // Restore feed if override is active OR setting is OFF
     if (homeGrid) {
       homeGrid.style.display = '';
-      homeGrid.style.removeProperty('display'); // Force YT to respect the un-hide
+      homeGrid.style.removeProperty('display'); 
     }
     const existingMsg = document.getElementById(messageId);
     if (existingMsg) {
@@ -128,44 +199,53 @@ function applyAllFeatures() {
     }
   }
 
-  // 3. HIDE SIDEBAR
+  // 3 & 4. LAYOUT COORDINATION: SIDEBAR & COMMENTS
   const sidebarRecs = document.querySelector('ytd-watch-next-secondary-results-renderer');
+  const secondaryInner = document.querySelector('#secondary-inner');
+  const comments = document.querySelector('#comments');
+  const primaryInner = document.querySelector('#primary-inner');
+
+  // Handle purely hiding the sidebar first
   if (sidebarRecs) {
     const targetDisplay = settings.hideSidebar ? 'none' : '';
     if (sidebarRecs.style.display !== targetDisplay) sidebarRecs.style.display = targetDisplay;
   }
 
-  // 4. SWAP COMMENTS (RE-ENGINEERED)
-  const secondaryInner = document.querySelector('#secondary-inner');
-  const comments = document.querySelector('#comments');
-  const primaryInner = document.querySelector('#primary-inner'); // Original home
-
+  // Handle the Complex Layout Swaps
   if (settings.swapComments && window.location.href.includes('watch')) {
-    // MOVE TO SIDEBAR
+    
+    // Move Comments to Sidebar
     if (comments && secondaryInner && comments.parentNode !== secondaryInner) {
       secondaryInner.prepend(comments);
-      
-      // Lock sidebar height to screen
       secondaryInner.style.setProperty('max-height', 'calc(100vh - 80px)', 'important');
       secondaryInner.style.setProperty('overflow-y', 'auto', 'important');
       secondaryInner.style.setProperty('display', 'block', 'important');
-      
       comments.style.display = 'block';
     }
+
+    // Move Recs to Bottom (and apply Grid CSS)
+    if (!settings.hideSidebar && sidebarRecs && primaryInner && sidebarRecs.parentNode !== primaryInner) {
+      primaryInner.appendChild(sidebarRecs);
+    }
+    toggleRecGridStyle(true);
+
   } else {
-    // MOVE BACK TO ORIGINAL HOME
+    
+    // Move Comments Back to Bottom
     if (comments && primaryInner && comments.parentNode === secondaryInner) {
-      // YouTube typically puts comments inside the #meta or above #related
-      // Finding the specific spot can be tricky, so we append to primary-inner
       primaryInner.appendChild(comments);
-      
-      // Clean up styles
       if (secondaryInner) {
         secondaryInner.style.removeProperty('max-height');
         secondaryInner.style.removeProperty('overflow-y');
         secondaryInner.style.removeProperty('display');
       }
     }
+
+    // Move Recs Back to Sidebar (and remove Grid CSS)
+    if (sidebarRecs && secondaryInner && sidebarRecs.parentNode === primaryInner) {
+      secondaryInner.appendChild(sidebarRecs);
+    }
+    toggleRecGridStyle(false);
   }
 
   // 5. UI INJECTION: TOGGLE BUTTON
@@ -206,7 +286,6 @@ function injectToggleButton() {
     settings.isExtensionEnabled = !settings.isExtensionEnabled;
     chrome.storage.local.set({ isExtensionEnabled: settings.isExtensionEnabled });
     
-    // Reset guard and apply changes immediately
     isApplying = false;
     applyAllFeatures(); 
   };
