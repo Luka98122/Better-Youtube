@@ -10,19 +10,19 @@ chrome.storage.local.get(null, (res) => {
   applyAllFeatures();
 });
 
-// 2. The Message Listener (Unified for Real-time and Settings)
+// 2. DEBUG Message Listener
 chrome.runtime.onMessage.addListener((msg) => {
-  // Handle both the old "newBlur" key and the new "UPDATE_SETTINGS" key
+  console.log("DEBUG: Message Received ->", msg); // This tells us IF the message arrived
+  
   if (msg.newBlur !== undefined) {
+    console.log("DEBUG: Real-time blur update to:", msg.newBlur);
     settings.blurRange = msg.newBlur;
     showBlurPreview();
   } else if (msg.type === 'UPDATE_SETTINGS') {
+    console.log(`DEBUG: Setting ${msg.id} changed to:`, msg.val);
     settings[msg.id] = msg.val;
-    if (msg.id === 'blurRange') {
-      showBlurPreview();
-    } else {
-      applyAllFeatures();
-    }
+    isApplying = false; 
+    applyAllFeatures();
   }
 });
 
@@ -118,8 +118,9 @@ function applyAllFeatures() {
     }
   } else {
     // Restore feed if override is active OR setting is OFF
-    if (homeGrid && homeGrid.style.display === 'none') {
+    if (homeGrid) {
       homeGrid.style.display = '';
+      homeGrid.style.removeProperty('display'); // Force YT to respect the un-hide
     }
     const existingMsg = document.getElementById(messageId);
     if (existingMsg) {
@@ -134,19 +135,35 @@ function applyAllFeatures() {
     if (sidebarRecs.style.display !== targetDisplay) sidebarRecs.style.display = targetDisplay;
   }
 
-  // 4. SWAP COMMENTS
+  // 4. SWAP COMMENTS (RE-ENGINEERED)
   const secondaryInner = document.querySelector('#secondary-inner');
+  const comments = document.querySelector('#comments');
+  const primaryInner = document.querySelector('#primary-inner'); // Original home
+
   if (settings.swapComments && window.location.href.includes('watch')) {
-    const comments = document.querySelector('#comments');
-    if (comments && secondaryInner) {
-      if (comments.parentNode !== secondaryInner) {
-        secondaryInner.prepend(comments);
-        comments.style.display = 'block';
-      }
-      if (secondaryInner.style.overflowY !== 'auto') {
-        secondaryInner.style.maxHeight = 'calc(100vh - 70px)'; 
-        secondaryInner.style.overflowY = 'auto';
-        secondaryInner.style.paddingRight = '5px'; 
+    // MOVE TO SIDEBAR
+    if (comments && secondaryInner && comments.parentNode !== secondaryInner) {
+      secondaryInner.prepend(comments);
+      
+      // Lock sidebar height to screen
+      secondaryInner.style.setProperty('max-height', 'calc(100vh - 80px)', 'important');
+      secondaryInner.style.setProperty('overflow-y', 'auto', 'important');
+      secondaryInner.style.setProperty('display', 'block', 'important');
+      
+      comments.style.display = 'block';
+    }
+  } else {
+    // MOVE BACK TO ORIGINAL HOME
+    if (comments && primaryInner && comments.parentNode === secondaryInner) {
+      // YouTube typically puts comments inside the #meta or above #related
+      // Finding the specific spot can be tricky, so we append to primary-inner
+      primaryInner.appendChild(comments);
+      
+      // Clean up styles
+      if (secondaryInner) {
+        secondaryInner.style.removeProperty('max-height');
+        secondaryInner.style.removeProperty('overflow-y');
+        secondaryInner.style.removeProperty('display');
       }
     }
   }

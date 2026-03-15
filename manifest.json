@@ -2,8 +2,14 @@
   "manifest_version": 3,
   "name": "Better YouTube",
   "version": "2.0",
-  "permissions": ["storage"],
-  "action": {
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
+  ],
+    "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
