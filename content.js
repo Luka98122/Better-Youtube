@@ -1,22 +1,43 @@
 let settings = {};
 let isApplying = false;
-let isHomeOverrideActive = false; // New override flag
+let isHomeOverrideActive = false;
 
 // 1. Initial Load
 chrome.storage.local.get(null, (res) => {
   settings = res;
-  // Set default if it's the first time
+  if (settings.blurRange === undefined) settings.blurRange = 20;
   if (settings.isExtensionEnabled === undefined) settings.isExtensionEnabled = true;
   applyAllFeatures();
 });
 
-// 2. Listen for Live Changes (from Popup)
+// 2. The Message Listener (Unified for Real-time and Settings)
 chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === 'UPDATE_SETTINGS') {
+  // Handle both the old "newBlur" key and the new "UPDATE_SETTINGS" key
+  if (msg.newBlur !== undefined) {
+    settings.blurRange = msg.newBlur;
+    showBlurPreview();
+  } else if (msg.type === 'UPDATE_SETTINGS') {
     settings[msg.id] = msg.val;
-    applyAllFeatures();
+    if (msg.id === 'blurRange') {
+      showBlurPreview();
+    } else {
+      applyAllFeatures();
+    }
   }
 });
+
+// Helper to show the blur even if the tab is focused (for the slider)
+function showBlurPreview() {
+  const video = document.querySelector('video');
+  if (video && settings.isExtensionEnabled) {
+    video.style.filter = `blur(${settings.blurRange}px)`;
+    clearTimeout(window.previewTimer);
+    window.previewTimer = setTimeout(() => {
+      isApplying = false;
+      applyAllFeatures(); // Return to normal auto-blur logic
+    }, 1000);
+  }
+}
 
 // 3. The Feature Logic 
 function applyAllFeatures() {
@@ -28,13 +49,11 @@ function applyAllFeatures() {
   // 1. BLUR LOGIC
   const isHidden = document.hidden || !document.hasFocus();
   if (video) {
-    // FIXED: Corrected the variable name here
-    const shouldActuallyBlur = isHidden && settings.isExtensionEnabled && settings.blurRange > 0;
-    const blurValue = shouldActuallyBlur ? `blur(${settings.blurRange}px)` : 'none';
-    
-    if (video.style.filter !== blurValue) {
+    const shouldBlur = isHidden && settings.isExtensionEnabled && settings.blurRange > 0;
+    const blurVal = shouldBlur ? `blur(${settings.blurRange}px)` : 'none';
+    if (video.style.filter !== blurVal) {
       video.style.transition = 'filter 0.1s linear';
-      video.style.filter = blurValue;
+      video.style.filter = blurVal;
     }
   }
 
