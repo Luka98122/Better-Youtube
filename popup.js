@@ -40,3 +40,21 @@ slider.oninput = function() {
     }
   });
 };
+
+function checkFocus() {
+  if (!document.hasFocus()) {
+    window.close();
+  } else {
+    requestAnimationFrame(checkFocus);
+  }
+}
+
+// Start the check after a short delay (to let the initial click settle)
+setTimeout(() => {
+  requestAnimationFrame(checkFocus);
+}, 200);
+
+// Standard blur listener as a backup
+window.addEventListener('blur', () => {
+  window.close();
+});
