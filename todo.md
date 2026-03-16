@@ -1,0 +1,3 @@
+Implement black and white filter
+Make comments on sidebar scroll down infinitely
+Bug when moving comments to sidebar, and when you move them back they just dissappear.

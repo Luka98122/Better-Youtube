@@ -12,21 +12,18 @@ chrome.storage.local.get(null, (res) => {
 
 // 2. DEBUG Message Listener
 chrome.runtime.onMessage.addListener((msg) => {
-  console.log("DEBUG: Message Received ->", msg); 
-  
   if (msg.newBlur !== undefined) {
-    console.log("DEBUG: Real-time blur update to:", msg.newBlur);
     settings.blurRange = msg.newBlur;
     showBlurPreview();
   } else if (msg.type === 'UPDATE_SETTINGS') {
-    console.log(`DEBUG: Setting ${msg.id} changed to:`, msg.val);
     settings[msg.id] = msg.val;
+    
     isApplying = false; 
-    if (msg.id === 'blurRange') {
-      showBlurPreview();
-    } else {
+    
+
+    setTimeout(() => {
       applyAllFeatures();
-    }
+    }, 10);
   }
 });
 
@@ -43,7 +40,6 @@ function showBlurPreview() {
   }
 }
 
-// Helper to inject CSS that turns the vertical list into a grid
 function toggleRecGridStyle(enable) {
   let styleTag = document.getElementById('custom-rec-grid-style');
   
@@ -60,58 +56,123 @@ function toggleRecGridStyle(enable) {
   
   if (styleTag.innerHTML === '') {
     styleTag.innerHTML = `
-      /* 1. Force the container to take full width of the bottom area */
-      #primary-inner ytd-watch-next-secondary-results-renderer {
+      /* 1. Neutralize the Sidebar Grid on the parent */
+      #primary-inner ytd-watch-next-secondary-results-renderer,
+      #primary-inner ytd-watch-next-secondary-results-renderer #items {
+        display: block !important;
         width: 100% !important;
         max-width: none !important;
-        margin-top: 30px !important;
-        padding-top: 20px !important;
-        border-top: 1px solid var(--yt-spec-10-percent-layer) !important;
       }
 
-      style-scope ytd-watch-next-secondary-results-renderer {
-        max-width:70% !important;
+      /* 2. Force the Category Bar (Chips) to be on its own line on top */
+      #primary-inner yt-related-chip-cloud-renderer {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 15px !important;
+        padding: 10px 0 !important;
+        border-bottom: 1px solid var(--yt-spec-10-percent-layer) !important;
       }
-      
-      /* 2. Force the inner wrapper to be a grid */
-      #primary-inner ytd-watch-next-secondary-results-renderer ytd-item-section-renderer #contents,
-      #primary-inner ytd-watch-next-secondary-results-renderer #items {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
-        gap: 16px !important;
+
+      /* 3. Ensure the chip cloud inside doesn't shrink */
+      #primary-inner yt-chip-cloud-renderer {
         width: 100% !important;
       }
-      
-      /* 3. Stack the thumbnails on top of the text */
-      #primary-inner ytd-compact-video-renderer {
-        display: flex !important;
+
+      /* 4. Target the Video Section and turn it into the Grid */
+      #primary-inner ytd-item-section-renderer #contents {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+        gap: 20px !important;
+        width: 100% !important;
+      }
+
+      /* 5. Clean up individual video wrappers (Lockups) */
+      #primary-inner yt-lockup-view-model {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+
+      #primary-inner .yt-lockup-view-model--horizontal {
         flex-direction: column !important;
         align-items: flex-start !important;
-        width: 100% !important;
-        min-width: 0 !important; /* Prevents grid blowout */
       }
-      
-      /* 4. Fix the Thumbnail Constraints */
-      #primary-inner ytd-compact-video-renderer ytd-thumbnail {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        margin: 0 0 8px 0 !important;
-      }
-      
-      /* 5. Force Images to scale correctly */
-      #primary-inner ytd-compact-video-renderer ytd-thumbnail img {
+
+      /* 6. Fix Thumbnail sizes for the new grid cells */
+      #primary-inner .yt-lockup-view-model__content-image {
         width: 100% !important;
         height: auto !important;
+        margin-bottom: 8px !important;
+      }
+
+      #primary-inner yt-thumbnail-view-model {
+        width: 100% !important;
+        height: auto !important;
+      }
+
+      #primary-inner yt-thumbnail-view-model img {
+        width: 100% !important;
+        aspect-ratio: 16/9 !important;
         object-fit: cover !important;
-        aspect-ratio: 16 / 9 !important;
+        border-radius: 12px !important;
       }
-      
-      /* 6. Fix Text Container Width */
-      #primary-inner ytd-compact-video-renderer .details.ytd-compact-video-renderer {
+
+      /* 7. Fix text metadata below thumbnails */
+      #primary-inner .yt-lockup-view-model__metadata {
         width: 100% !important;
-        min-width: 0 !important;
-        padding-right: 0 !important;
+        padding-left: 0 !important;
+      }
+
+      /* 8. Hide the sidebar's original header/spinner to prevent shifting */
+      #primary-inner ytd-item-section-renderer #header,
+      #primary-inner #spinner-container {
+        display: none !important;
+      }
+
+      /* Stick player when scrolling comments and recommended. */
+
+      /* Inside toggleRecGridStyle styleTag.innerHTML */
+
+      /* 1. Hide the scrollbar for the sidebar specifically */
+      #secondary-inner {
+        /* For Firefox */
+        scrollbar-width: none !important; 
+        /* For Chrome, Safari, and Edge */
+        -ms-overflow-style: none !important; 
+      }
+
+      #secondary-inner::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+      }
+
+      /* 2. Style the main page scrollbar to look sleeker (Optional) */
+      /* This makes the main scrollbar look better on Ubuntu/Linux */
+      ::-webkit-scrollbar {
+        width: 10px !important;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--yt-spec-base-background) !important;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #444 !important;
+        border-radius: 5px !important;
+        border: 2px solid var(--yt-spec-base-background) !important;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #666 !important;
+      }
+
+      /* 3. Keep the Sidebar Pinned */
+      #secondary.ytd-watch-flexy {
+        position: sticky !important;
+        top: 56px !important;
+        height: calc(100vh - 56px) !important;
+        z-index: 100 !important;
+        /* Ensure the container itself doesn't show a bar, only the inner div */
+        overflow: hidden !important; 
       }
     `;
   }
@@ -199,53 +260,55 @@ function applyAllFeatures() {
     }
   }
 
-  // 3 & 4. LAYOUT COORDINATION: SIDEBAR & COMMENTS
+  // 3 & 4. LAYOUT COORDINATION
   const sidebarRecs = document.querySelector('ytd-watch-next-secondary-results-renderer');
   const secondaryInner = document.querySelector('#secondary-inner');
   const comments = document.querySelector('#comments');
   const primaryInner = document.querySelector('#primary-inner');
 
-  // Handle purely hiding the sidebar first
-  if (sidebarRecs) {
-    const targetDisplay = settings.hideSidebar ? 'none' : '';
-    if (sidebarRecs.style.display !== targetDisplay) sidebarRecs.style.display = targetDisplay;
-  }
-
-  // Handle the Complex Layout Swaps
-  if (settings.swapComments && window.location.href.includes('watch')) {
+  if (window.location.href.includes('watch')) {
+    if (settings.swapComments && window.location.href.includes('watch')) {
     
-    // Move Comments to Sidebar
+    // 1. Move Comments to Sidebar
     if (comments && secondaryInner && comments.parentNode !== secondaryInner) {
       secondaryInner.prepend(comments);
-      secondaryInner.style.setProperty('max-height', 'calc(100vh - 80px)', 'important');
-      secondaryInner.style.setProperty('overflow-y', 'auto', 'important');
-      secondaryInner.style.setProperty('display', 'block', 'important');
-      comments.style.display = 'block';
+      
+      // Independent scroll ONLY for the comments sidebar
+      secondaryInner.style.cssText = `
+      height: 100% !important; 
+      overflow-y: scroll !important; /* Keep the 'scroll' logic but CSS hides the bar */
+      display: block !important;
+      padding-right: 10px; /* Prevents text from hitting the edge of the screen */
+    `;
+    comments.style.display = 'block';
     }
 
-    // Move Recs to Bottom (and apply Grid CSS)
+    // 2. The Video Grid (stays in Primary, scrolls with page)
     if (!settings.hideSidebar && sidebarRecs && primaryInner && sidebarRecs.parentNode !== primaryInner) {
       primaryInner.appendChild(sidebarRecs);
+      // Remove any previously applied heights/scrolls to the grid
+      sidebarRecs.style.cssText = ""; 
     }
     toggleRecGridStyle(true);
 
   } else {
-    
-    // Move Comments Back to Bottom
-    if (comments && primaryInner && comments.parentNode === secondaryInner) {
-      primaryInner.appendChild(comments);
-      if (secondaryInner) {
-        secondaryInner.style.removeProperty('max-height');
-        secondaryInner.style.removeProperty('overflow-y');
-        secondaryInner.style.removeProperty('display');
+      // RESET LOGIC: Put everything back exactly where it belongs
+      if (comments && primaryInner && comments.parentNode === secondaryInner) {
+        // Find the skeleton/placeholder where comments usually live
+        const commentTarget = document.querySelector('#ticket-shelf') || primaryInner;
+        commentTarget.after(comments); 
+        if (secondaryInner) secondaryInner.style.cssText = "";
       }
+      if (sidebarRecs && secondaryInner && sidebarRecs.parentNode === primaryInner) {
+        secondaryInner.appendChild(sidebarRecs);
+      }
+      toggleRecGridStyle(false);
     }
 
-    // Move Recs Back to Sidebar (and remove Grid CSS)
-    if (sidebarRecs && secondaryInner && sidebarRecs.parentNode === primaryInner) {
-      secondaryInner.appendChild(sidebarRecs);
+    // 3. Handle purely hiding the sidebar/recommendations
+    if (sidebarRecs) {
+      sidebarRecs.style.display = settings.hideSidebar ? 'none' : '';
     }
-    toggleRecGridStyle(false);
   }
 
   // 5. UI INJECTION: TOGGLE BUTTON
@@ -315,3 +378,20 @@ startObserver();
 window.addEventListener('blur', () => applyAllFeatures());
 window.addEventListener('focus', () => applyAllFeatures());
 document.addEventListener('visibilitychange', () => applyAllFeatures());
+
+// Function to manually trigger YouTube's infinite scroll for moved elements
+function handleInternalScroll(e) {
+  const el = e.target;
+  // If we are within 200px of the bottom of the internal container
+  if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
+    // Dispatch a scroll event to the window so YouTube's scripts think the page moved
+    window.dispatchEvent(new Event('scroll'));
+  }
+}
+
+// Attach the listeners to the new scrollable zones
+document.addEventListener('scroll', (e) => {
+  if (e.target.id === 'secondary-inner' || e.target.tagName === 'YTD-WATCH-NEXT-SECONDARY-RESULTS-RENDERER') {
+    handleInternalScroll(e);
+  }
+}, true); // Use capture phase to catch internal scrolls
