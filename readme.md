@@ -29,17 +29,15 @@ A comprehensive focus and layout suite for YouTube. This extension is designed t
 * **Independent Scrolling**: Configures the sidebar to scroll independently of the main video, allowing users to read comments without the video scrolling out of view.
 
     </td>
-    <td width="35%" valign="top">
+    <td width="35%" valign="middle" align="center">
       <img src="./assets/demo/example2.png" alt="Recommended Settings" style="width: 100%;" />
-      <p align="center"><em>Recommended Settings</em></p>
+      <p><em>Recommended Settings</em></p>
     </td>
   </tr>
 </table>
 
 ---
 
-
----
 
 ## Installation
 
