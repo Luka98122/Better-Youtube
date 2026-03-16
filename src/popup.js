@@ -1,4 +1,4 @@
-const elements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isExtensionEnabled', 'disableHomeOverride'];
+const elements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isExtensionEnabled', 'disableHomeOverride', 'blackAndWhite', 'blurCaptions'];
 
 // 1. Initial Load
 chrome.storage.local.get(elements, (res) => {
@@ -22,6 +22,9 @@ function sendMessageToYouTube(message) {
       console.warn("No YouTube tabs found to message.");
       return;
     }
+    tabs.forEach(tab => {
+      chrome.tabs.sendMessage(tab.id, message).catch(err => console.log("Tab " + tab.id + " error: " + err.message));
+    });
   });
 }
 

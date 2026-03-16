@@ -3,13 +3,18 @@
 A comprehensive focus and layout suite for YouTube. This extension is designed to eliminate addictive UI elements, improve video viewing ergonomics, and protect focus by blurring playback when the user is not actively engaged with the tab.
 
 ---
+![Example Image](./assets/demo/example1.png)
 
 ## Features
+
+
 
 ### Blur and Privacy
 * **Automated Focus Blur**: Blurs the video player immediately when the browser tab loses focus or is hidden.
 * **In-Player Toggle**: Injects a native-styled button into the YouTube action bar to toggle the global blur state.
 * **Adjustable Intensity**: Provides a range slider (0px to 100px) in the popup to customize the strength of the blur effect.
+* **Black and White Filter**: Applies a grayscale filter to the video, removing colors.
+* **Blur Captions**: Extends the blur and grayscale filters to the closed captions as well.
 
 ### Productivity and Discipline
 * **Home Feed Blocking**: Removes the recommendation grid from the home page and replaces it with a focus prompt: "Do you really need to be on here?"
@@ -20,6 +25,18 @@ A comprehensive focus and layout suite for YouTube. This extension is designed t
 ### Layout Optimization
 * **Sidebar Comments**: Relocates the comment section to the right-hand sidebar.
 * **Independent Scrolling**: Configures the sidebar to scroll independently of the main video, allowing users to read comments without the video scrolling out of view.
+
+<div align="center" style="display: flex; justify-content: center; gap: 20px;">
+  <div style="text-align: center;">
+    <img src="./assets/demo/example2.png" alt="Recommended Settings" />
+    <p><em>Recommended Settings</em></p>
+  </div>
+  <div style="text-align: center;">
+    <img src="./assets/demo/example3.png" alt="All Options" />
+    <p><em>All Options</em></p>
+  </div>
+</div>
+
 
 ---
 

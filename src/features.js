@@ -1,13 +1,31 @@
 const Features = {
   updateBlur: (settings) => {
     const video = document.querySelector('video');
+    const captions = document.querySelector('.ytp-caption-window-container');
     if (!video) return;
+
     const isHidden = document.hidden || !document.hasFocus();
     const shouldBlur = isHidden && settings.isExtensionEnabled && settings.blurRange > 0;
-    const blurVal = shouldBlur ? `blur(${settings.blurRange}px)` : 'none';
-    if (video.style.filter !== blurVal) {
+    
+    let filters = [];
+    if (shouldBlur) filters.push(`blur(${settings.blurRange}px)`);
+    if (settings.blackAndWhite) filters.push('grayscale(100%)');
+    const filterVal = filters.length > 0 ? filters.join(' ') : 'none';
+
+    if (video.style.filter !== filterVal) {
       video.style.transition = 'filter 0.1s linear';
-      video.style.filter = blurVal;
+      video.style.filter = filterVal;
+    }
+
+    if (captions) {
+      let capFilters = [];
+      if (shouldBlur && settings.blurCaptions) capFilters.push(`blur(${settings.blurRange}px)`);
+      if (settings.blackAndWhite && settings.blurCaptions) capFilters.push('grayscale(100%)');
+      const capFilterVal = capFilters.length > 0 ? capFilters.join(' ') : 'none';
+      if (captions.style.filter !== capFilterVal) {
+        captions.style.transition = 'filter 0.1s linear';
+        captions.style.filter = capFilterVal;
+      }
     }
   },
 
@@ -44,6 +62,7 @@ const Features = {
     // Determine visibility safely via CSS classes
     const actualHideSidebar = settings.hideSidebar && !settings.swapComments;
     document.body.classList.toggle('hide-sidebar-active', !!actualHideSidebar);
+    document.body.classList.toggle('hide-recs', !!settings.hideSidebar);
     document.body.classList.toggle('yt-custom-layout', !!settings.swapComments);
 
     if (window.location.href.includes('watch')) {
@@ -62,8 +81,12 @@ const Features = {
         }
       } else {
         if (comments && primaryInner && comments.parentNode === secondaryInner) {
-          const target = document.querySelector('#ticket-shelf') || primaryInner;
-          target.after(comments); 
+          const target = document.querySelector('#ticket-shelf');
+          if (target) {
+            target.after(comments); 
+          } else {
+            primaryInner.appendChild(comments);
+          }
         }
         if (sidebarRecs && secondaryInner && sidebarRecs.parentNode === primaryInner) {
           secondaryInner.appendChild(sidebarRecs);

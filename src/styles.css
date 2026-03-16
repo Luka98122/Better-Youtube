@@ -4,6 +4,9 @@ body.hide-sidebar-active ytd-watch-flexy[flexy] #primary.ytd-watch-flexy { max-w
 body.hide-sidebar-active #secondary { visibility: hidden !important; width: 0 !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; }
 body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-outer.ytd-watch-flexy, body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-inner.ytd-watch-flexy { max-width: 100% !important; }
 
+/* Hide recommendations unconditionally */
+body.hide-recs ytd-watch-next-secondary-results-renderer { display: none !important; }
+
 /* Hide Home Feed */
 body.hide-home-active ytd-browse[page-subtype="home"] ytd-rich-grid-renderer { 
   display: none !important; 
