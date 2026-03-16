@@ -10,12 +10,13 @@
     "*://*.youtube.com/*"
   ],
     "action": {
-    "default_popup": "popup.html"
+    "default_popup": "src/popup.html"
   },
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["content.js"],
+      "js": ["src/content.js","src/features.js"],
+      "css" : ["src/styles.css"],
       "run_at": "document_start" 
     }
   ]
