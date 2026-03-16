@@ -22,11 +22,6 @@ function sendMessageToYouTube(message) {
       console.warn("No YouTube tabs found to message.");
       return;
     }
-    tabs.forEach(tab => {
-      chrome.tabs.sendMessage(tab.id, message).catch(err => {
-        console.error("Could not send to tab " + tab.id + ": Extension context invalidated. Please refresh the YouTube tab.");
-      });
-    });
   });
 }
 
