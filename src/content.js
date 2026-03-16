@@ -20,15 +20,15 @@ init();
 
 // 2. Main Controller
 function applyAllFeatures() {
-  if (State.isApplying || Object.keys(State.settings).length === 0) return; 
+  if (State.isApplying || Object.keys(State.settings).length === 0) return;
   if (!document.body) return;
   State.isApplying = true;
 
   Features.updateBlur(State.settings);
-  
+
   Features.updateHomeBlocker(State.settings, State.isHomeOverrideActive, () => {
     State.isHomeOverrideActive = true;
-    State.isApplying = false; 
+    State.isApplying = false;
     applyAllFeatures();
     setTimeout(() => {
       State.isHomeOverrideActive = false;
@@ -42,7 +42,7 @@ function applyAllFeatures() {
     State.settings.isExtensionEnabled = !State.settings.isExtensionEnabled;
     chrome.storage.local.set({ isExtensionEnabled: State.settings.isExtensionEnabled });
     State.isApplying = false;
-    applyAllFeatures(); 
+    applyAllFeatures();
   });
 
   setTimeout(() => { State.isApplying = false; }, 50);
@@ -57,7 +57,7 @@ chrome.runtime.onMessage.addListener((msg) => {
     State.previewTimer = setTimeout(() => { State.isApplying = false; applyAllFeatures(); }, 1000);
   } else if (msg.type === 'UPDATE_SETTINGS') {
     State.settings[msg.id] = msg.val;
-    State.isApplying = false; 
+    State.isApplying = false;
     requestAnimationFrame(applyAllFeatures);
   }
 });
@@ -66,7 +66,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 function startObserver() {
   try {
     const target = document.body || document.documentElement;
-    if (!target) throw new Error("DOM not ready");
+    //if (!target) throw new Error("DOM not ready");
     const observer = new MutationObserver(() => { if (!State.isApplying) applyAllFeatures(); });
     observer.observe(target, { childList: true, subtree: true });
   } catch (error) {

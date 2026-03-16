@@ -2,6 +2,12 @@
   "manifest_version": 3,
   "name": "Better YouTube",
   "version": "2.0",
+  "icons": {
+    "16": "assets/extension/icons/icon16.png",
+    "32": "assets/extension/icons/icon32.png",
+    "48": "assets/extension/icons/icon48.png",
+    "128": "assets/extension/icons/icon128.png"
+  },
   "permissions": [
     "storage",
     "tabs"
@@ -9,15 +15,27 @@
   "host_permissions": [
     "*://*.youtube.com/*"
   ],
-    "action": {
+  "description": "Enhance focus and ergonomics on YouTube. Auto-blur playback, block addictive feeds, and optimize your layout for deep work.",
+  "action": {
+    "default_icon": {
+      "16": "assets/extension/icons/icon16.png",
+      "32": "assets/extension/icons/icon32.png"
+    },
     "default_popup": "src/popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "css": ["src/styles.css"],
-      "js": ["src/features.js", "src/content.js"],
-      "run_at": "document_start" 
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "css": [
+        "src/styles.css"
+      ],
+      "js": [
+        "src/features.js",
+        "src/content.js"
+      ],
+      "run_at": "document_start"
     }
   ]
 }

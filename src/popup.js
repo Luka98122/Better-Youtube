@@ -23,7 +23,7 @@ function sendMessageToYouTube(message) {
       return;
     }
     tabs.forEach(tab => {
-      chrome.tabs.sendMessage(tab.id, message).catch(err => console.log("Tab " + tab.id + " error: " + err.message));
+      //chrome.tabs.sendMessage(tab.id, message).catch(err => console.log("Tab " + tab.id + " error: " + err.message));
     });
   });
 }
@@ -40,7 +40,7 @@ document.addEventListener('change', (e) => {
 
 const slider = document.getElementById('blurRange');
 if (slider) {
-  slider.oninput = function() {
+  slider.oninput = function () {
     const val = this.value;
     document.getElementById('blurValDisplay').innerText = val;
     chrome.storage.local.set({ blurRange: val });
