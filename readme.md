@@ -6,9 +6,10 @@ A comprehensive focus and layout suite for YouTube. This extension is designed t
 ![Example Image](./assets/demo/example1.png)
 
 ## Features
-<div style="display: flex; gap: 40px; align-items: flex-start; margin-top: 20px;">
 
-<div style="flex: 1;">
+<table>
+  <tr>
+    <td width="65%" valign="top">
 
 ### Blur and Privacy
 * **Automated Focus Blur**: Blurs the video player immediately when the browser tab loses focus or is hidden.
@@ -27,14 +28,15 @@ A comprehensive focus and layout suite for YouTube. This extension is designed t
 * **Sidebar Comments**: Relocates the comment section to the right-hand sidebar.
 * **Independent Scrolling**: Configures the sidebar to scroll independently of the main video, allowing users to read comments without the video scrolling out of view.
 
-</div>
+    </td>
+    <td width="35%" valign="top">
+      <img src="./assets/demo/example2.png" alt="Recommended Settings" style="width: 100%;" />
+      <p align="center"><em>Recommended Settings</em></p>
+    </td>
+  </tr>
+</table>
 
-<div style="flex: 0 0 300px; text-align: center; position: sticky; top: 20px;">
-  <img src="./assets/demo/example2.png" alt="Recommended Settings" style="width: 100%; border-radius: 8px;" />
-  <p><em>Recommended Settings</em></p>
-</div>
-
-</div>
+---
 
 
 ---
