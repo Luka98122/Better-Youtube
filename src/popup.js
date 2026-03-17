@@ -23,7 +23,7 @@ function sendMessageToYouTube(message) {
       return;
     }
     tabs.forEach(tab => {
-      //chrome.tabs.sendMessage(tab.id, message).catch(err => console.log("Tab " + tab.id + " error: " + err.message));
+      chrome.tabs.sendMessage(tab.id, message).catch(err => { });
     });
   });
 }

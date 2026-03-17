@@ -10,3 +10,7 @@
 - [x] When moving comments to sidebar, and when you move them back they just dissappear.
 - [x] Hide home page also blocks videos on /channel/videos tabs.
 - [x] Hide recommended videos toggle only applys after page refresh.
+- [ ] Extension behaves weirdly on managed accounts without access to comment sections.
+- [ ] Toggling comment section layhout twice while on a video causes the comments to dissappear.
+- [x] Toggling recommened videos twice while on a video causes the video to scale weirdly.
+
