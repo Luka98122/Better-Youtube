@@ -12,5 +12,5 @@
 - [x] Hide recommended videos toggle only applys after page refresh.
 - [ ] Extension behaves weirdly on managed accounts without access to comment sections.
 - [ ] Toggling comment section layhout twice while on a video causes the comments to dissappear.
-- [x] Toggling recommened videos twice while on a video causes the video to scale weirdly.
-
+- [x] Toggling recommended videos twice while on a video causes the video to scale weirdly.
+- [ ] Toggling hide recommended videos doesn't hide recommended videos if comments are on the sidebar.
