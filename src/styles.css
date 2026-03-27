@@ -20,7 +20,8 @@ body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-inner.ytd-watc
 }
 
 /* Hide recommendations unconditionally */
-body.hide-recs ytd-watch-next-secondary-results-renderer {
+body.hide-recs ytd-watch-next-secondary-results-renderer,
+body.hide-recs.yt-custom-layout #primary-inner ytd-watch-next-secondary-results-renderer {
   display: none !important;
 }
 
