@@ -58,6 +58,26 @@ const Features = {
     }
   },
 
+  updateShorts: (settings) => {
+    // 1. Hide shorts 
+    const isHideShorts = !!settings.hideShorts;
+    if (document.body.classList.contains('hide-shorts-active') !== isHideShorts) {
+      document.body.classList.toggle('hide-shorts-active', isHideShorts);
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    // 2. Redirect shorts
+    if (settings.redirectShorts && window.location.pathname.startsWith('/shorts/')) {
+      const parts = window.location.pathname.split('/shorts/');
+      if (parts.length > 1) {
+        const videoId = parts[1];
+        if (videoId) {
+          window.location.replace(`https://www.youtube.com/watch?v=${videoId}`);
+        }
+      }
+    }
+  },
+
   updateLayout: (settings) => {
     let layoutChanged = false;
 

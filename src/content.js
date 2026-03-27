@@ -36,6 +36,8 @@ function applyAllFeatures() {
     }, 60000);
   });
 
+  Features.updateShorts(State.settings);
+
   Features.updateLayout(State.settings);
 
   Features.injectToggleButton(State.settings, () => {

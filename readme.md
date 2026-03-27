@@ -1,4 +1,5 @@
 # Better YouTube (v2.0)
+![Tested](https://img.shields.io/badge/Tested-Yes-brightgreen?style=for-the-badge) ![Deployed](https://img.shields.io/badge/Deployed-No-red?style=for-the-badge)
 
 A comprehensive focus and layout suite for YouTube. This extension is designed to eliminate addictive UI elements, improve video viewing ergonomics, and protect focus by blurring playback when the user is not actively engaged with the tab.
 

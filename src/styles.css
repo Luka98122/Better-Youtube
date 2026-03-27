@@ -1,69 +1,195 @@
 /* --- 1. GLOBAL OVERRIDES & UTILITIES --- */
 /* Safely hide sidebar without breaking the video player's width math */
-body.hide-sidebar-active ytd-watch-flexy[flexy] #primary.ytd-watch-flexy { max-width: 100% !important; min-width: 100% !important; flex-basis: 100% !important; }
-body.hide-sidebar-active #secondary { visibility: hidden !important; width: 0 !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; }
-body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-outer.ytd-watch-flexy, body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-inner.ytd-watch-flexy { max-width: 100% !important; }
+body.hide-sidebar-active ytd-watch-flexy[flexy] #primary.ytd-watch-flexy {
+  max-width: 100% !important;
+  min-width: 100% !important;
+  flex-basis: 100% !important;
+}
+
+body.hide-sidebar-active #secondary {
+  visibility: hidden !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-outer.ytd-watch-flexy,
+body.hide-sidebar-active ytd-watch-flexy[flexy] #player-container-inner.ytd-watch-flexy {
+  max-width: 100% !important;
+}
 
 /* Hide recommendations unconditionally */
-body.hide-recs ytd-watch-next-secondary-results-renderer { display: none !important; }
+body.hide-recs ytd-watch-next-secondary-results-renderer {
+  display: none !important;
+}
 
 /* Hide Home Feed */
-body.hide-home-active ytd-browse[page-subtype="home"] ytd-rich-grid-renderer { 
-  display: none !important; 
+body.hide-home-active ytd-browse[page-subtype="home"] ytd-rich-grid-renderer {
+  display: none !important;
 }
 
 /* Focus Message Styling */
 #custom-focus-message {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 70vh; width: 100%; color: var(--yt-spec-text-primary); font-family: "Roboto", sans-serif; text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  width: 100%;
+  color: var(--yt-spec-text-primary);
+  font-family: "Roboto", sans-serif;
+  text-align: center;
 }
-#custom-focus-message h1 { font-size: 32px; margin-bottom: 10px; opacity: 0.9; }
-#custom-focus-message p { font-size: 18px; opacity: 0.6; }
+
+#custom-focus-message h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+#custom-focus-message p {
+  font-size: 18px;
+  opacity: 0.6;
+}
+
 #temp-show-feed {
-  margin-top: 30px; background: rgba(255,255,255,0.05); border: 1px solid #444; color: #888; 
-  padding: 10px 20px; border-radius: 20px; cursor: pointer; transition: 0.2s;
+  margin-top: 30px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #444;
+  color: #888;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.2s;
 }
-#temp-show-feed:hover { background: rgba(255,255,255,0.1); }
+
+#temp-show-feed:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
 
 /* Custom Scrollbars */
-::-webkit-scrollbar { width: 10px !important; }
-::-webkit-scrollbar-track { background: var(--yt-spec-base-background) !important; }
-::-webkit-scrollbar-thumb { background: #444 !important; border-radius: 5px !important; border: 2px solid var(--yt-spec-base-background) !important; }
-::-webkit-scrollbar-thumb:hover { background: #666 !important; }
+::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--yt-spec-base-background) !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444 !important;
+  border-radius: 5px !important;
+  border: 2px solid var(--yt-spec-base-background) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666 !important;
+}
 
 
 /* --- 2. CUSTOM LAYOUT: COMMENTS & GRID SWAP --- */
 /* Keep Sidebar Pinned */
-body.yt-custom-layout #secondary.ytd-watch-flexy { position: sticky !important; top: 56px !important; height: calc(100vh - 56px) !important; z-index: 100 !important; overflow: hidden !important; }
+body.yt-custom-layout #secondary.ytd-watch-flexy {
+  position: sticky !important;
+  top: 56px !important;
+  height: calc(100vh - 56px) !important;
+  z-index: 100 !important;
+  overflow: hidden !important;
+}
 
 /* Sidebar Comments Scroll Container (Hidden Scrollbar) */
 body.yt-custom-layout #secondary-inner {
-  height: 100% !important; overflow-y: scroll !important; display: block !important; padding-right: 10px !important;
-  scrollbar-width: none !important; -ms-overflow-style: none !important; 
+  height: 100% !important;
+  overflow-y: scroll !important;
+  display: block !important;
+  padding-right: 10px !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-body.yt-custom-layout #secondary-inner::-webkit-scrollbar { display: none !important; width: 0 !important; }
+
+body.yt-custom-layout #secondary-inner::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
 
 /* Neutralize existing sidebar grid */
 body.yt-custom-layout #primary-inner ytd-watch-next-secondary-results-renderer,
-body.yt-custom-layout #primary-inner ytd-watch-next-secondary-results-renderer #items { display: block !important; width: 100% !important; max-width: none !important; }
+body.yt-custom-layout #primary-inner ytd-watch-next-secondary-results-renderer #items {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+}
 
 /* Chips / Categories Bar */
 body.yt-custom-layout #primary-inner yt-related-chip-cloud-renderer {
-  display: block !important; width: 100% !important; margin-bottom: 15px !important; padding: 10px 0 !important; border-bottom: 1px solid var(--yt-spec-10-percent-layer) !important;
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 15px !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid var(--yt-spec-10-percent-layer) !important;
 }
-body.yt-custom-layout #primary-inner yt-chip-cloud-renderer { width: 100% !important; }
+
+body.yt-custom-layout #primary-inner yt-chip-cloud-renderer {
+  width: 100% !important;
+}
 
 /* The New Video Grid */
-body.yt-custom-layout #primary-inner ytd-item-section-renderer #contents { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important; gap: 20px !important; width: 100% !important; }
+body.yt-custom-layout #primary-inner ytd-item-section-renderer #contents {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+  gap: 20px !important;
+  width: 100% !important;
+}
 
 /* Clean up Video Wrappers */
-body.yt-custom-layout #primary-inner yt-lockup-view-model { width: 100% !important; margin: 0 !important; }
-body.yt-custom-layout #primary-inner .yt-lockup-view-model--horizontal { flex-direction: column !important; align-items: flex-start !important; }
-body.yt-custom-layout #primary-inner .yt-lockup-view-model__content-image { width: 100% !important; height: auto !important; margin-bottom: 8px !important; }
-body.yt-custom-layout #primary-inner yt-thumbnail-view-model { width: 100% !important; height: auto !important; }
-body.yt-custom-layout #primary-inner yt-thumbnail-view-model img { width: 100% !important; aspect-ratio: 16/9 !important; object-fit: cover !important; border-radius: 12px !important; }
-body.yt-custom-layout #primary-inner .yt-lockup-view-model__metadata { width: 100% !important; padding-left: 0 !important; }
+body.yt-custom-layout #primary-inner yt-lockup-view-model {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+body.yt-custom-layout #primary-inner .yt-lockup-view-model--horizontal {
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+body.yt-custom-layout #primary-inner .yt-lockup-view-model__content-image {
+  width: 100% !important;
+  height: auto !important;
+  margin-bottom: 8px !important;
+}
+
+body.yt-custom-layout #primary-inner yt-thumbnail-view-model {
+  width: 100% !important;
+  height: auto !important;
+}
+
+body.yt-custom-layout #primary-inner yt-thumbnail-view-model img {
+  width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  object-fit: cover !important;
+  border-radius: 12px !important;
+}
+
+body.yt-custom-layout #primary-inner .yt-lockup-view-model__metadata {
+  width: 100% !important;
+  padding-left: 0 !important;
+}
 
 /* Hide redundant elements */
 body.yt-custom-layout #primary-inner ytd-item-section-renderer #header,
-body.yt-custom-layout #primary-inner #spinner-container { display: none !important; }
+body.yt-custom-layout #primary-inner #spinner-container {
+  display: none !important;
+}
+
+/* --- 3. HIDE SHORTS --- */
+body.hide-shorts-active ytd-rich-shelf-renderer[is-shorts],
+body.hide-shorts-active ytd-reel-shelf-renderer,
+body.hide-shorts-active ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+body.hide-shorts-active ytd-video-renderer:has(a[href^="/shorts/"]),
+body.hide-shorts-active ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+body.hide-shorts-active ytm-reel-shelf-renderer,
+body.hide-shorts-active ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+body.hide-shorts-active ytd-guide-entry-renderer:has(a[title="Shorts"]) {
+  display: none !important;
+}
