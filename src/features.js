@@ -39,19 +39,27 @@ const Features = {
       if (homeBrowse && !document.getElementById(messageId)) {
         let messageDiv = document.createElement('div');
         messageDiv.id = messageId;
-        const overrideBtnHtml = settings.disableHomeOverride ? '' : `<button id="temp-show-feed">Show feed anyway (1 minute)</button>`;
         messageDiv.innerHTML = `
           <h1>Do you really need to be on here?</h1>
           <p>Focus on what matters. Your home feed is disabled.</p>
-          ${overrideBtnHtml}
         `;
         homeBrowse.prepend(messageDiv);
-
-        const btn = messageDiv.querySelector('#temp-show-feed');
-        if (btn) btn.onclick = onOverrideClick;
       }
       const existingMsg = document.getElementById(messageId);
-      if (existingMsg) existingMsg.style.display = 'flex';
+      if (existingMsg) {
+        existingMsg.style.display = 'flex';
+        // Live-update the override button based on current setting
+        const existingBtn = existingMsg.querySelector('#temp-show-feed');
+        if (settings.disableHomeOverride && existingBtn) {
+          existingBtn.remove();
+        } else if (!settings.disableHomeOverride && !existingBtn) {
+          const btn = document.createElement('button');
+          btn.id = 'temp-show-feed';
+          btn.textContent = 'Show feed anyway (1 minute)';
+          btn.onclick = onOverrideClick;
+          existingMsg.appendChild(btn);
+        }
+      }
     } else {
       const existingMsg = document.getElementById(messageId);
       if (existingMsg) existingMsg.style.display = 'none';
@@ -97,7 +105,13 @@ const Features = {
       layoutChanged = true;
     }
 
-    if (window.location.href.includes('watch')) {
+    const isWatchPage = window.location.href.includes('watch');
+    const shouldHideRecsShorts = isWatchPage && !!settings.swapComments;
+    if (document.body.classList.contains('hide-recs-shorts') !== shouldHideRecsShorts) {
+      document.body.classList.toggle('hide-recs-shorts', shouldHideRecsShorts);
+    }
+
+    if (isWatchPage) {
       const sidebarRecs = document.querySelector('ytd-watch-next-secondary-results-renderer');
       const secondaryInner = document.querySelector('#secondary-inner');
       const comments = document.querySelector('#comments');

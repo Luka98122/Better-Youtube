@@ -14,19 +14,7 @@ chrome.storage.local.get(elements, (res) => {
   });
 });
 
-// 2. The Robust Sender Function
-function sendMessageToYouTube(message) {
-  // We remove the 'active: true' requirement because the popup is currently the active window!
-  chrome.tabs.query({ url: "*://*.youtube.com/*" }, (tabs) => {
-    if (tabs.length === 0) {
-      console.warn("No YouTube tabs found to message.");
-      return;
-    }
-    tabs.forEach(tab => {
-      chrome.tabs.sendMessage(tab.id, message).catch(err => { });
-    });
-  });
-}
+
 
 // 3. Listeners
 document.addEventListener('change', (e) => {
@@ -34,7 +22,6 @@ document.addEventListener('change', (e) => {
   if (e.target.type === 'checkbox') {
     const val = e.target.checked;
     chrome.storage.local.set({ [id]: val });
-    sendMessageToYouTube({ type: 'UPDATE_SETTINGS', id, val });
   }
 });
 
@@ -44,7 +31,6 @@ if (slider) {
     const val = this.value;
     document.getElementById('blurValDisplay').innerText = val;
     chrome.storage.local.set({ blurRange: val });
-    sendMessageToYouTube({ newBlur: val });
   };
 }
 

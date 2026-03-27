@@ -75,7 +75,7 @@ def main():
         print(f"Error updating readme.md: {e}")
 
     # Build final commit message
-    final_message = f"{message} | Tested: {'yes' if is_tested else 'no'} | Deployed: {'yes' if is_deployed else 'no'}"
+    final_message = f"{message}"
 
     # Git commands
     try:

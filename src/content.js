@@ -50,18 +50,14 @@ function applyAllFeatures() {
   setTimeout(() => { State.isApplying = false; }, 50);
 }
 
-// 3. Message Listeners
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.newBlur !== undefined) {
-    State.settings.blurRange = msg.newBlur;
-    Features.updateBlur(State.settings); // Preview
-    clearTimeout(State.previewTimer);
-    State.previewTimer = setTimeout(() => { State.isApplying = false; applyAllFeatures(); }, 1000);
-  } else if (msg.type === 'UPDATE_SETTINGS') {
-    State.settings[msg.id] = msg.val;
-    State.isApplying = false;
-    requestAnimationFrame(applyAllFeatures);
+// 3. Storage Change Listener (replaces message-based communication)
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+  for (const [key, { newValue }] of Object.entries(changes)) {
+    State.settings[key] = newValue;
   }
+  State.isApplying = false;
+  applyAllFeatures();
 });
 
 // 4. Observers & Focus Listeners

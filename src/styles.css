@@ -191,6 +191,19 @@ body.hide-shorts-active ytd-video-renderer:has(a[href^="/shorts/"]),
 body.hide-shorts-active ytd-grid-video-renderer:has(a[href^="/shorts/"]),
 body.hide-shorts-active ytm-reel-shelf-renderer,
 body.hide-shorts-active ytd-compact-video-renderer:has(a[href^="/shorts/"]),
-body.hide-shorts-active ytd-guide-entry-renderer:has(a[title="Shorts"]) {
+body.hide-shorts-active ytd-guide-entry-renderer:has(a[title="Shorts"]),
+body.hide-shorts-active yt-lockup-view-model:has(a[href*="/shorts/"]) {
+  display: none !important;
+}
+
+/* --- 4. HIDE SHORTS IN RECOMMENDATIONS (watch page + sidebar comments) --- */
+body.hide-recs-shorts ytd-rich-shelf-renderer[is-shorts],
+body.hide-recs-shorts ytd-reel-shelf-renderer,
+body.hide-recs-shorts ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+body.hide-recs-shorts ytd-video-renderer:has(a[href^="/shorts/"]),
+body.hide-recs-shorts ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+body.hide-recs-shorts ytm-reel-shelf-renderer,
+body.hide-recs-shorts ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+body.hide-recs-shorts yt-lockup-view-model:has(a[href*="/shorts/"]) {
   display: none !important;
 }
