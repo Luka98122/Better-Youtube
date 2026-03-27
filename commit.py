@@ -3,6 +3,9 @@
 import os
 import subprocess
 import sys
+import json
+import urllib.parse
+from datetime import datetime
 
 def main():
     try:
@@ -22,11 +25,33 @@ def main():
     deploy_color = "brightgreen" if is_deployed else "red"
     deploy_text = "Yes" if is_deployed else "No"
 
-    # shields.io badges
+    # Read version
+    version = "Unknown"
+    try:
+        with open("manifest.json", "r") as f:
+            manifest_data = json.load(f)
+            version = manifest_data.get("version", "Unknown")
+    except Exception as e:
+        print(f"Failed to read version from manifest.json: {e}")
+
+    version_safe = urllib.parse.quote(version).replace("-", "--")
+    date_safe = urllib.parse.quote(datetime.now().strftime("%d %b %Y")).replace("-", "--")
+
+    # Get git username
+    try:
+        git_username = subprocess.check_output(["git", "config", "user.name"], text=True).strip()
+    except Exception:
+        git_username = "Unknown"
+    username_safe = urllib.parse.quote(git_username).replace("-", "--")
+
+    # Shields.io badges
+    badge_version = f"![Version](https://img.shields.io/badge/Version-v{version_safe}-blue?style=for-the-badge)"
+    badge_date = f"![Date](https://img.shields.io/badge/Date-{date_safe}-blue?style=for-the-badge)"
+    badge_user = f"![Committed By](https://img.shields.io/badge/Committed%20By-{username_safe}-blue?style=for-the-badge)"
     badge_test = f"![Tested](https://img.shields.io/badge/Tested-{test_text}-{test_color}?style=for-the-badge)"
     badge_deploy = f"![Deployed](https://img.shields.io/badge/Deployed-{deploy_text}-{deploy_color}?style=for-the-badge)"
 
-    badges_line = f"{badge_test} {badge_deploy}\n"
+    badges_line = f"{badge_version} {badge_date} {badge_user} {badge_test} {badge_deploy}\n"
 
     # Update readme.md
     readme_path = "readme.md"
