@@ -298,6 +298,13 @@ const Features = {
             statusMsg.style.color = '#f0ad4e';
 
             // Resolve handles via background service worker
+            if (!chrome.runtime || !chrome.runtime.sendMessage) {
+              statusMsg.textContent = 'Extension updated. Please refresh the page.';
+              statusMsg.style.color = '#d9534f';
+              saveBtn.disabled = false;
+              return;
+            }
+
             chrome.runtime.sendMessage({ type: 'resolveChannels', handles }, (response) => {
               if (chrome.runtime.lastError || !response || !response.success) {
                 statusMsg.textContent = 'Failed to connect. Try again.';
@@ -370,6 +377,12 @@ const Features = {
     // Fetch the feed
     Features._customFeedState.isLoading = true;
     Features._customFeedState.lastFetchKey = fetchKey;
+
+    if (!chrome.runtime || !chrome.runtime.sendMessage) {
+      Features._customFeedState.isLoading = false;
+      console.warn('[BetterYT] Extension context invalidated.');
+      return;
+    }
 
     chrome.runtime.sendMessage(
       { type: 'fetchFeed', channelIds: whitelistIds, blacklistIds: blacklistIds },
@@ -466,6 +479,10 @@ const Features = {
           refreshBtn.onclick = (e) => {
             e.preventDefault();
             // Clear cache and re-fetch
+            if (!chrome.runtime || !chrome.runtime.sendMessage) {
+              alert('Extension updated. Please refresh the page.');
+              return;
+            }
             chrome.runtime.sendMessage({ type: 'clearFeedCache' }, () => {
               Features._customFeedState.renderedKey = null;
               Features._customFeedState.lastFetchKey = null;
@@ -493,6 +510,13 @@ const Features = {
             addBtn.disabled = true;
             addStatus.textContent = 'Resolving channels...';
             addStatus.style.color = '#f0ad4e';
+
+            if (!chrome.runtime || !chrome.runtime.sendMessage) {
+              addStatus.textContent = 'Extension updated. Please refresh the page.';
+              addStatus.style.color = '#d9534f';
+              addBtn.disabled = false;
+              return;
+            }
 
             chrome.runtime.sendMessage({ type: 'resolveChannels', handles }, (response) => {
               if (chrome.runtime.lastError || !response || !response.success) {

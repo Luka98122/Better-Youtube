@@ -4,151 +4,280 @@
 <head>
   <meta charset="UTF-8">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
     :root {
-      --bg-color: #0f0f0f;
-      --card-bg: #1f1f1f;
+      --bg-color: #0d0d0d;
+      --card-bg: rgba(31, 31, 31, 0.7);
       --accent: #e95420;
+      --accent-hover: #ff6a33;
       --text: #f1f1f1;
       --text-dim: #aaa;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --glass-blur: blur(12px);
     }
 
     html {
       scrollbar-width: none;
-      /* Firefox */
     }
 
     html::-webkit-scrollbar {
       display: none;
-      /* Safari and Chrome */
     }
 
     body {
-      width: 250px;
-      padding: 15px;
-      font-family: 'Roboto', sans-serif;
+      width: 320px;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
       background: var(--bg-color);
       color: var(--text);
       margin: 0;
-      scrollbar-width: none;
-      /* Firefox */
-    }
-
-    body::-webkit-scrollbar {
-      display: none;
-      /* Safari and Chrome */
+      position: relative;
     }
 
     h3 {
-      margin-top: 0;
-      color: var(--accent);
-      font-size: 18px;
+      margin: 0;
+      padding: 16px;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
       text-align: center;
+      background: rgba(13, 13, 13, 0.9);
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--border-color);
+      letter-spacing: 0.5px;
+    }
+
+    h3 span {
+      color: var(--accent);
+    }
+
+    /* Tab Navigation */
+    .tabs {
+      display: flex;
+      background: rgba(13, 13, 13, 0.9);
+      backdrop-filter: var(--glass-blur);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      padding: 12px 0;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* Tab Content panes */
+    .tab-content {
+      display: none;
+      padding: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Options & Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
       margin-bottom: 12px;
     }
 
-    /* Accordion Styles */
-    details {
-      background: var(--card-bg);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      overflow: hidden;
-    }
-
-    summary {
-      padding: 12px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 14px;
-      list-style: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    summary::-webkit-details-marker {
-      display: none;
-    }
-
-    summary::after {
-      content: '▸';
-      color: var(--text-dim);
-      transition: 0.2s;
-    }
-
-    details[open] summary::after {
-      transform: rotate(90deg);
-    }
-
-    .content {
-      padding: 0 12px 12px 12px;
-      border-top: 1px solid #2a2a2a;
-      padding-top: 10px;
-    }
-
-    /* Input Styles */
     .option {
-      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 13px;
+      margin-bottom: 8px;
     }
 
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
+    .option:last-child {
+      margin-bottom: 0;
+    }
+
+    .option-header {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .option label {
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
-      margin-top: 0px;
-    }
-
-    input[type="checkbox"] {
-      cursor: pointer;
-      accent-color: var(--accent);
-      width: 16px;
-      height: 16px;
-    }
-
-    .val-label {
-      color: var(--accent);
-      font-weight: bold;
     }
 
     .hint {
       font-size: 11px;
       color: var(--text-dim);
-      margin-top: -5px;
-      margin-bottom: 10px;
-      display: block;
+      line-height: 1.4;
     }
 
+    /* Custom Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #333;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 20px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked+.slider {
+      background-color: var(--accent);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(16px);
+    }
+
+    /* Range Slider */
+    .range-container {
+      margin-top: 12px;
+    }
+
+    .range-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .val-label {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Textareas */
     textarea {
       width: 100%;
-      min-height: 60px;
-      background: #2a2a2a;
-      border: 1px solid #3a3a3a;
-      border-radius: 6px;
+      min-height: 70px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid #333;
+      border-radius: 8px;
       color: var(--text);
       font-family: 'Roboto Mono', monospace;
       font-size: 12px;
-      padding: 8px;
+      padding: 10px;
       resize: vertical;
       box-sizing: border-box;
+      margin-top: 8px;
       margin-bottom: 4px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background 0.2s;
     }
 
     textarea:focus {
       border-color: var(--accent);
+      background: rgba(0, 0, 0, 0.4);
     }
 
     textarea::placeholder {
-      color: #555;
+      color: #666;
+    }
+
+    .sub-label {
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 12px;
+      display: inline-block;
     }
 
     .status-msg {
       font-size: 11px;
-      margin-bottom: 8px;
       display: block;
       min-height: 14px;
     }
@@ -164,111 +293,174 @@
     .status-msg.error {
       color: #d9534f;
     }
-
-    .sub-label {
-      font-size: 12px;
-      color: var(--text-dim);
-      margin-bottom: 4px;
-      display: block;
-    }
   </style>
 </head>
 
 <body>
 
-  <h3>Better YouTube</h3>
+  <h3>Better <span>YouTube</span></h3>
 
-  <details open>
-    <summary>Blur Settings</summary>
-    <div class="content">
-      <div class="option">
-        <label>Blur</label>
-        <input type="checkbox" id="isExtensionEnabled">
-      </div>
-      <span class="hint">Auto-blur video when window is not focused</span>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-blur">General</button>
+    <button class="tab-btn" data-tab="tab-layout">Layout</button>
+    <button class="tab-btn" data-tab="tab-feed">Feed</button>
+  </div>
 
+  <!-- BLUR & DISPLAY TAB -->
+  <div id="tab-blur" class="tab-content active">
+    <div class="card">
       <div class="option">
-        <label>Black & White Filter</label>
-        <input type="checkbox" id="blackAndWhite">
+        <div class="option-header">
+          <label for="isExtensionEnabled">Blur Unfocused</label>
+          <span class="hint">Auto-blur video when window is not focused</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="isExtensionEnabled">
+          <span class="slider"></span>
+        </label>
       </div>
-      <span class="hint">Applies grayscale filter to videos.</span>
 
-      <div class="option">
-        <label>Blur Captions</label>
-        <input type="checkbox" id="blurCaptions">
+      <div class="range-container">
+        <div class="range-header">
+          <span>Blur Intensity</span>
+          <span class="val-label"><span id="blurValDisplay">20</span>px</span>
+        </div>
+        <input type="range" id="blurRange" min="0" max="100" value="20">
       </div>
-      <span class="hint">Applies blur to subtitles/captions too.</span>
-
-      <div class="option">
-        <label>Intensity</label>
-        <span class="val-label"><span id="blurValDisplay">20</span>px</span>
-      </div>
-      <input type="range" id="blurRange" min="0" max="100" value="20">
     </div>
-  </details>
 
-  <details>
-    <summary>Layout Settings</summary>
-    <div class="content">
+    <div class="card">
       <div class="option">
-        <label>Move Comments to Sidebar</label>
-        <input type="checkbox" id="swapComments">
+        <div class="option-header">
+          <label for="blurCaptions">Blur Captions</label>
+          <span class="hint">Applies blur to subtitles/captions too</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="blurCaptions">
+          <span class="slider"></span>
+        </label>
       </div>
-      <span class="hint">Makes sidebar independently scrollable.</span>
+
+      <div class="option" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="option-header">
+          <label for="blackAndWhite">Grayscale Mode</label>
+          <span class="hint">Applies black & white filter to videos</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="blackAndWhite">
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
-  </details>
+  </div>
 
-  <details>
-    <summary>Productivity</summary>
-    <div class="content">
+  <!-- LAYOUT TAB -->
+  <div id="tab-layout" class="tab-content">
+    <div class="card">
       <div class="option">
-        <label>Block Home Feed</label>
-        <input type="checkbox" id="hideHome">
+        <div class="option-header">
+          <label for="hideSidebar">Hide Recommended</label>
+          <span class="hint">Removes sidebar suggestions</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="hideSidebar">
+          <span class="slider"></span>
+        </label>
       </div>
-      <div class="option" style="padding-left: 15px; opacity: 0.8;">
-        <label>Hide "Show Anyway" Button</label>
-        <input type="checkbox" id="disableHomeOverride">
+
+      <div class="option" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="option-header">
+          <label for="swapComments">Comments in Sidebar</label>
+          <span class="hint">Makes sidebar scrollable independently</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="swapComments">
+          <span class="slider"></span>
+        </label>
       </div>
-      <div class="option">
-        <label>Hide Recommended Videos</label>
-        <input type="checkbox" id="hideSidebar">
-      </div>
-      <div class="option">
-        <label>Hide Shorts</label>
-        <input type="checkbox" id="hideShorts">
-      </div>
-      <div class="option">
-        <label>Redirect Shorts</label>
-        <input type="checkbox" id="redirectShorts">
-      </div>
-      <span class="hint">Opens /shorts/ URLs in the standard player</span>
     </div>
-  </details>
 
-  <details>
-    <summary>Home Feed</summary>
-    <div class="content">
+    <div class="card">
       <div class="option">
-        <label>Curated Home Feed</label>
-        <input type="checkbox" id="customFeed">
+        <div class="option-header">
+          <label for="hideShorts">Hide Shorts</label>
+          <span class="hint">Removes Shorts from UI</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="hideShorts">
+          <span class="slider"></span>
+        </label>
       </div>
-      <div class="option" style="padding-left: 15px; opacity: 0.8;">
-        <label>Also Show Normal Feed</label>
-        <input type="checkbox" id="showNormalFeed">
-      </div>
-      <span class="hint">Replace YouTube's home feed with videos from channels you choose. Only works when "Block Home
-        Feed" is off.</span>
 
-      <span class="sub-label">Channels (one per line)</span>
-      <textarea id="customFeedWhitelist" placeholder="@3blue1brown&#10;@veritasium&#10;@numberphile"
-        rows="4"></textarea>
+      <div class="option" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="option-header">
+          <label for="redirectShorts">Redirect Shorts</label>
+          <span class="hint">Opens /shorts/ in standard player</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="redirectShorts">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEED TAB -->
+  <div id="tab-feed" class="tab-content">
+    <div class="card">
+      <div class="option">
+        <div class="option-header">
+          <label for="hideHome">Block Home Feed</label>
+          <span class="hint">Replaces home feed with a blank screen</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="hideHome">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="option" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="option-header">
+          <label for="disableHomeOverride" style="font-size: 13px;">Hide "Show Anyway"</label>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="disableHomeOverride">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="option">
+        <div class="option-header">
+          <label for="customFeed">Curated Home Feed</label>
+          <span class="hint">Shows videos from specified channels</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="customFeed">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="option" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="option-header">
+          <label for="showNormalFeed" style="font-size: 13px;">Also Show Normal Feed</label>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="showNormalFeed">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <span class="sub-label">Allowed Channels</span>
+      <textarea id="customFeedWhitelist" placeholder="@3blue1brown&#10;@veritasium"></textarea>
       <span class="status-msg" id="whitelistStatus"></span>
 
-      <span class="sub-label">Blocked Channels (one per line)</span>
-      <textarea id="customFeedBlacklist" placeholder="@channel_to_hide" rows="3"></textarea>
+      <span class="sub-label">Blocked Channels</span>
+      <textarea id="customFeedBlacklist" placeholder="@channel_to_hide"></textarea>
       <span class="status-msg" id="blacklistStatus"></span>
     </div>
-  </details>
+  </div>
 
   <script src="popup.js"></script>
 </body>
