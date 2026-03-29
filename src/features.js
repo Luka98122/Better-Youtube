@@ -222,12 +222,33 @@ const Features = {
     // Should the custom feed be active?
     const shouldBeActive = !settings.hideHome && !!settings.customFeed && homeBrowse;
 
+    // Manage default grid display
+    if (homeBrowse) {
+      const defaultGrid = homeBrowse.querySelector('ytd-rich-grid-renderer');
+      if (defaultGrid) {
+        if (!shouldBeActive) {
+          defaultGrid.style.display = '';
+          defaultGrid.style.marginTop = '';
+          defaultGrid.style.borderTop = '';
+          defaultGrid.style.paddingTop = '';
+        } else {
+          defaultGrid.style.display = settings.showNormalFeed ? '' : 'none';
+          if (settings.showNormalFeed) {
+            defaultGrid.style.marginTop = '40px';
+            defaultGrid.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
+            defaultGrid.style.paddingTop = '40px';
+          } else {
+            defaultGrid.style.marginTop = '';
+            defaultGrid.style.borderTop = '';
+            defaultGrid.style.paddingTop = '';
+          }
+        }
+      }
+    }
+
     // If not active, clean up and bail
     if (!shouldBeActive) {
       if (existingContainer) existingContainer.remove();
-      // Restore default feed visibility
-      const defaultGrid = homeBrowse?.querySelector('ytd-rich-grid-renderer');
-      if (defaultGrid) defaultGrid.style.display = '';
       Features._customFeedState.renderedKey = null;
       return;
     }
@@ -236,9 +257,6 @@ const Features = {
     const channels = settings.customFeedChannels;
     if (!channels || Object.keys(channels).length === 0) {
       // Show empty state
-      const defaultGrid = homeBrowse.querySelector('ytd-rich-grid-renderer');
-      if (defaultGrid) defaultGrid.style.display = 'none';
-
       if (!existingContainer) {
         const container = document.createElement('div');
         container.id = feedContainerId;
@@ -335,10 +353,6 @@ const Features = {
 
     // Don't start a new fetch if one is in progress for the same key
     if (Features._customFeedState.isLoading && Features._customFeedState.lastFetchKey === fetchKey) return;
-
-    // Hide default feed
-    const defaultGrid = homeBrowse.querySelector('ytd-rich-grid-renderer');
-    if (defaultGrid) defaultGrid.style.display = 'none';
 
     // Show loading state
     if (!existingContainer) {

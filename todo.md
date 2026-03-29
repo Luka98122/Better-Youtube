@@ -16,3 +16,4 @@
 - [x] Toggling comment section layhout twice while on a video causes the comments to dissappear.
 - [x] Toggling recommended videos twice while on a video causes the video to scale weirdly.
 - [x] Toggling hide recommended videos doesn't hide recommended videos if comments are on the sidebar.
+- [ ] Refactor: Remove inline css

@@ -1,4 +1,4 @@
-const checkboxElements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isExtensionEnabled', 'disableHomeOverride', 'blackAndWhite', 'blurCaptions', 'hideShorts', 'redirectShorts', 'customFeed'];
+const checkboxElements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isExtensionEnabled', 'disableHomeOverride', 'blackAndWhite', 'blurCaptions', 'hideShorts', 'redirectShorts', 'customFeed', 'showNormalFeed'];
 const textareaElements = ['customFeedWhitelist', 'customFeedBlacklist'];
 const allElements = [...checkboxElements, ...textareaElements, 'customFeedChannels', 'customFeedBlacklistChannels'];
 
