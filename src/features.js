@@ -205,5 +205,353 @@ const Features = {
     `;
     btnContainer.querySelector('#autoblur-toggle-btn').onclick = onToggle;
     targetMenu.prepend(btnContainer);
+  },
+
+  // --- Custom Home Feed ---
+  _customFeedState: {
+    isLoading: false,
+    lastFetchKey: null,
+    renderedKey: null
+  },
+
+  updateCustomFeed: (settings) => {
+    const homeBrowse = document.querySelector('ytd-browse[page-subtype="home"]');
+    const feedContainerId = 'custom-feed-container';
+    const existingContainer = document.getElementById(feedContainerId);
+
+    // Should the custom feed be active?
+    const shouldBeActive = !settings.hideHome && !!settings.customFeed && homeBrowse;
+
+    // If not active, clean up and bail
+    if (!shouldBeActive) {
+      if (existingContainer) existingContainer.remove();
+      // Restore default feed visibility
+      const defaultGrid = homeBrowse?.querySelector('ytd-rich-grid-renderer');
+      if (defaultGrid) defaultGrid.style.display = '';
+      Features._customFeedState.renderedKey = null;
+      return;
+    }
+
+    // We need channels to show
+    const channels = settings.customFeedChannels;
+    if (!channels || Object.keys(channels).length === 0) {
+      // Show empty state
+      const defaultGrid = homeBrowse.querySelector('ytd-rich-grid-renderer');
+      if (defaultGrid) defaultGrid.style.display = 'none';
+
+      if (!existingContainer) {
+        const container = document.createElement('div');
+        container.id = feedContainerId;
+        container.innerHTML = `
+          <div class="custom-feed-empty">
+            <div class="custom-feed-empty-icon">📺</div>
+            <h2>Your Curated Feed</h2>
+            <p style="margin-bottom: 24px;">Your feed is currently empty. Add channel handles below to start seeing their latest videos.</p>
+            
+            <div class="custom-feed-inline-form">
+              <label>Channels (one per line, e.g. @3blue1brown)</label>
+              <textarea id="in-page-channel-input" rows="4" placeholder="@3blue1brown&#10;@veritasium"></textarea>
+              <div class="form-actions">
+                <span id="in-page-status"></span>
+                <button id="in-page-save-btn">Save Channels</button>
+              </div>
+            </div>
+          </div>
+        `;
+        homeBrowse.prepend(container);
+
+        const saveBtn = document.getElementById('in-page-save-btn');
+        const inputArea = document.getElementById('in-page-channel-input');
+        const statusMsg = document.getElementById('in-page-status');
+
+        if (saveBtn && inputArea && statusMsg) {
+          saveBtn.addEventListener('click', () => {
+            const text = inputArea.value;
+            const handles = text.split('\n').map(h => h.trim()).filter(h => h.length > 0);
+
+            if (handles.length === 0) {
+              statusMsg.textContent = 'Please enter at least one channel handle.';
+              statusMsg.style.color = '#d9534f';
+              return;
+            }
+
+            saveBtn.disabled = true;
+            statusMsg.textContent = 'Resolving channels...';
+            statusMsg.style.color = '#f0ad4e';
+
+            // Resolve handles via background service worker
+            chrome.runtime.sendMessage({ type: 'resolveChannels', handles }, (response) => {
+              if (chrome.runtime.lastError || !response || !response.success) {
+                statusMsg.textContent = 'Failed to connect. Try again.';
+                statusMsg.style.color = '#d9534f';
+                saveBtn.disabled = false;
+                return;
+              }
+
+              const resolved = response.channels;
+              const foundCount = Object.keys(resolved).length;
+
+              if (foundCount === 0) {
+                statusMsg.textContent = 'None of the channels were found. Check spelling.';
+                statusMsg.style.color = '#d9534f';
+                saveBtn.disabled = false;
+                return;
+              }
+
+              // Update storage with the raw text and resolved IDs
+              // The storage listener in content.js will automatically trigger a re-render
+              chrome.storage.local.set({
+                customFeedWhitelist: text,
+                customFeedChannels: resolved
+              }, () => {
+                statusMsg.textContent = `Added ${foundCount} channels. Loading feed...`;
+                statusMsg.style.color = '#5cb85c';
+              });
+            });
+          });
+        }
+      }
+      return;
+    }
+
+    // Build a fetch key based on channels + blacklist
+    const whitelistIds = [];
+    const idToChannel = {};
+    for (const val of Object.values(channels)) {
+      if (typeof val === 'string') {
+        whitelistIds.push(val);
+        idToChannel[val] = { id: val, avatar: '', verified: false };
+      } else {
+        whitelistIds.push(val.id);
+        idToChannel[val.id] = val;
+      }
+    }
+    const blacklistChannels = settings.customFeedBlacklistChannels || {};
+    const blacklistIds = Object.values(blacklistChannels).map(b => typeof b === 'string' ? b : b.id);
+    const fetchKey = whitelistIds.join(',') + '|' + blacklistIds.join(',');
+
+    // Don't re-fetch if we already rendered this exact config
+    if (Features._customFeedState.renderedKey === fetchKey && existingContainer) return;
+
+    // Don't start a new fetch if one is in progress for the same key
+    if (Features._customFeedState.isLoading && Features._customFeedState.lastFetchKey === fetchKey) return;
+
+    // Hide default feed
+    const defaultGrid = homeBrowse.querySelector('ytd-rich-grid-renderer');
+    if (defaultGrid) defaultGrid.style.display = 'none';
+
+    // Show loading state
+    if (!existingContainer) {
+      const container = document.createElement('div');
+      container.id = feedContainerId;
+      container.innerHTML = `
+        <div class="custom-feed-loading">
+          <div class="custom-feed-spinner"></div>
+          <p>Loading your curated feed...</p>
+        </div>
+      `;
+      homeBrowse.prepend(container);
+    }
+
+    // Fetch the feed
+    Features._customFeedState.isLoading = true;
+    Features._customFeedState.lastFetchKey = fetchKey;
+
+    chrome.runtime.sendMessage(
+      { type: 'fetchFeed', channelIds: whitelistIds, blacklistIds: blacklistIds },
+      (response) => {
+        Features._customFeedState.isLoading = false;
+
+        if (chrome.runtime.lastError || !response || !response.success) {
+          console.warn('[BetterYT] Feed fetch failed:', chrome.runtime.lastError || response?.error);
+          const container = document.getElementById(feedContainerId);
+          if (container) {
+            container.innerHTML = `
+              <div class="custom-feed-empty">
+                <div class="custom-feed-empty-icon">⚠️</div>
+                <h2>Feed Unavailable</h2>
+                <p>Couldn't load your curated feed. Try refreshing the page.</p>
+              </div>
+            `;
+          }
+          return;
+        }
+
+        Features._customFeedState.renderedKey = fetchKey;
+        const videos = response.videos;
+        const container = document.getElementById(feedContainerId);
+        if (!container) return;
+
+        if (videos.length === 0) {
+          container.innerHTML = `
+            <div class="custom-feed-empty">
+              <div class="custom-feed-empty-icon">📭</div>
+              <h2>No Videos Found</h2>
+              <p>The channels in your list haven't posted recently, or couldn't be reached.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Render the video grid
+        const header = `
+          <div class="custom-feed-header">
+            <h2>Your Feed</h2>
+            <button id="custom-feed-refresh" title="Refresh feed">↻</button>
+          </div>
+        `;
+
+        const cards = videos.map(v => {
+          const channelInfo = idToChannel[v.channelId] || {};
+          // Fallback to a placeholder avatar if the avatar wasn't resolved
+          const avatarUrl = channelInfo.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(v.channelName)}&background=random`;
+          const verifiedBadge = channelInfo.verified ? `
+            <svg class="custom-feed-verified" viewBox="0 0 24 24" fill="var(--yt-spec-text-secondary, #aaa)" width="14" height="14">
+              <path d="M12,2C6.5,2,2,6.5,2,12c0,5.5,4.5,10,10,10s10-4.5,10-10C22,6.5,17.5,2,12,2z M9.8,17.3l-4.2-4.1L7,11.8l2.8,2.7L17,7.4 l1.4,1.4L9.8,17.3z"></path>
+            </svg>
+          ` : '';
+
+          return `
+          <a href="/watch?v=${v.videoId}" class="custom-feed-card">
+            <div class="custom-feed-thumbnail-wrap">
+              <img class="custom-feed-thumbnail" src="${v.thumbnail}" alt="" loading="lazy">
+            </div>
+            <div class="custom-feed-info">
+              <img class="custom-feed-avatar" src="${avatarUrl}" alt="">
+              <div class="custom-feed-text-wrap">
+                <h3 class="custom-feed-title">${escapeHTML(v.title)}</h3>
+                <div class="custom-feed-channel-row">
+                  <span class="custom-feed-channel">${escapeHTML(v.channelName)}</span>
+                  ${verifiedBadge}
+                </div>
+                <div class="custom-feed-metadata">
+                  <span class="custom-feed-time">${timeAgo(v.published)}</span>
+                  ${v.views ? `<span class="custom-feed-views">${formatViews(v.views)} views</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </a>
+        `}).join('');
+
+        const footerForm = `
+          <div class="custom-feed-inline-form" style="margin-top: 40px; margin-bottom: 20px;">
+            <label>Add More Channels (one per line, e.g. @3blue1brown)</label>
+            <textarea id="in-page-list-channel-input" rows="3" placeholder="@newchannel"></textarea>
+            <div class="form-actions">
+              <span id="in-page-list-status"></span>
+              <button id="in-page-list-save-btn">Add Channels</button>
+            </div>
+          </div>
+        `;
+
+        container.innerHTML = header + `<div class="custom-feed-grid">${cards}</div>` + footerForm;
+
+        // Refresh button handler
+        const refreshBtn = container.querySelector('#custom-feed-refresh');
+        if (refreshBtn) {
+          refreshBtn.onclick = (e) => {
+            e.preventDefault();
+            // Clear cache and re-fetch
+            chrome.runtime.sendMessage({ type: 'clearFeedCache' }, () => {
+              Features._customFeedState.renderedKey = null;
+              Features._customFeedState.lastFetchKey = null;
+              Features.updateCustomFeed(settings);
+            });
+          };
+        }
+
+        // Add more channels handler
+        const addBtn = container.querySelector('#in-page-list-save-btn');
+        const addInput = container.querySelector('#in-page-list-channel-input');
+        const addStatus = container.querySelector('#in-page-list-status');
+
+        if (addBtn && addInput && addStatus) {
+          addBtn.addEventListener('click', () => {
+            const newText = addInput.value;
+            const handles = newText.split('\n').map(h => h.trim()).filter(h => h.length > 0);
+
+            if (handles.length === 0) {
+              addStatus.textContent = 'Please enter at least one channel handle.';
+              addStatus.style.color = '#d9534f';
+              return;
+            }
+
+            addBtn.disabled = true;
+            addStatus.textContent = 'Resolving channels...';
+            addStatus.style.color = '#f0ad4e';
+
+            chrome.runtime.sendMessage({ type: 'resolveChannels', handles }, (response) => {
+              if (chrome.runtime.lastError || !response || !response.success) {
+                addStatus.textContent = 'Failed to connect. Try again.';
+                addStatus.style.color = '#d9534f';
+                addBtn.disabled = false;
+                return;
+              }
+
+              const resolved = response.channels;
+              const foundCount = Object.keys(resolved).length;
+
+              if (foundCount === 0) {
+                addStatus.textContent = 'None of the channels were found. Check spelling.';
+                addStatus.style.color = '#d9534f';
+                addBtn.disabled = false;
+                return;
+              }
+
+              // Merge with existing whitelist
+              const existingWhitelistStr = settings.customFeedWhitelist || '';
+              const existingChannelsObj = settings.customFeedChannels || {};
+
+              const mergedText = (existingWhitelistStr + '\n' + newText).trim();
+              const mergedResolved = Object.assign({}, existingChannelsObj, resolved);
+
+              chrome.storage.local.set({
+                customFeedWhitelist: mergedText,
+                customFeedChannels: mergedResolved
+              }, () => {
+                addStatus.textContent = `Added ${foundCount} channels. Reloading...`;
+                addStatus.style.color = '#5cb85c';
+                // the content.js storage listener will automatically reload the feed
+              });
+            });
+          });
+        }
+      }
+    );
   }
 };
+
+// --- Utility Functions ---
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const now = new Date();
+  const then = new Date(dateStr);
+  const diffMs = now - then;
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+  const diffWeek = Math.floor(diffDay / 7);
+  const diffMonth = Math.floor(diffDay / 30);
+  const diffYear = Math.floor(diffDay / 365);
+
+  if (diffYear >= 1) return `${diffYear} year${diffYear > 1 ? 's' : ''} ago`;
+  if (diffMonth >= 1) return `${diffMonth} month${diffMonth > 1 ? 's' : ''} ago`;
+  if (diffWeek >= 1) return `${diffWeek} week${diffWeek > 1 ? 's' : ''} ago`;
+  if (diffDay >= 1) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+  if (diffHr >= 1) return `${diffHr} hour${diffHr > 1 ? 's' : ''} ago`;
+  if (diffMin >= 1) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
+  return 'just now';
+}
+
+function formatViews(num) {
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return num.toString();
+}

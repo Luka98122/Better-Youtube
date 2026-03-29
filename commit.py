@@ -12,6 +12,7 @@ def main():
         message = input("Enter commit message: ")
         tested = input("Was the build thoroughly tested? (y/n): ").strip().lower()
         deployed = input("Is it deployed? (y/n): ").strip().lower()
+        version_change = input("Is this a Major, Intermediate, or Minor version change? (major/intermediate/minor - leave blank to skip): ").strip().lower()
     except KeyboardInterrupt:
         print("\nAborted.")
         sys.exit(1)
@@ -27,12 +28,65 @@ def main():
 
     # Read version
     version = "Unknown"
+    manifest_data = {}
     try:
         with open("manifest.json", "r") as f:
             manifest_data = json.load(f)
             version = manifest_data.get("version", "Unknown")
     except Exception as e:
         print(f"Failed to read version from manifest.json: {e}")
+
+    new_version = version
+    if version != "Unknown" and version_change in ['major', 'intermediate', 'minor']:
+        parts = version.split('.')
+        try:
+            if len(parts) == 3:
+                major = int(parts[0])
+                minor_ver = int(parts[1])
+                patch = int(parts[2])
+                
+                if version_change == 'major':
+                    major += 1
+                    minor_ver = 0
+                    patch = 0
+                elif version_change == 'intermediate':
+                    minor_ver += 1
+                    patch = 0
+                elif version_change == 'minor':
+                    patch += 1
+                    
+                new_version = f"{major}.{minor_ver}.{patch}"
+        except ValueError:
+            print("Warning: version format invalid. Could not increment.")
+
+    print("\n--- Summary ---")
+    print(f"Commit Message: {message}")
+    print(f"Tested: {test_text}")
+    print(f"Deployed: {deploy_text}")
+    if new_version != version:
+        print(f"Version Change: {version} -> {new_version}")
+    else:
+        print(f"Version: {version} (No change)")
+
+    try:
+        confirm = input("\nDoes everything seem correct? (y/n): ").strip().lower()
+        if confirm != 'y':
+            print("Aborted.")
+            sys.exit(0)
+    except KeyboardInterrupt:
+        print("\nAborted.")
+        sys.exit(1)
+
+    if new_version != version:
+        manifest_data["version"] = new_version
+        try:
+            with open("manifest.json", "w") as f:
+                json.dump(manifest_data, f, indent=2)
+                f.write("\n")
+        except Exception as e:
+            print(f"Failed to update manifest.json: {e}")
+            sys.exit(1)
+        version = new_version
 
     version_safe = urllib.parse.quote(version).replace("-", "--")
     date_safe = urllib.parse.quote(datetime.now().strftime("%d %b %Y")).replace("-", "--")

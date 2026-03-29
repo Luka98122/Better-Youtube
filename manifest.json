@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Better YouTube",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "icons": {
     "16": "assets/extension/icons/icon16.png",
     "32": "assets/extension/icons/icon32.png",
@@ -15,6 +15,9 @@
     "*://*.youtube.com/*"
   ],
   "description": "Enhance focus and ergonomics on YouTube. Auto-blur playback, block addictive feeds, and optimize your layout for deep work.",
+  "background": {
+    "service_worker": "src/background.js"
+  },
   "action": {
     "default_icon": {
       "16": "assets/extension/icons/icon16.png",

@@ -120,6 +120,57 @@
       margin-bottom: 10px;
       display: block;
     }
+
+    textarea {
+      width: 100%;
+      min-height: 60px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12px;
+      padding: 8px;
+      resize: vertical;
+      box-sizing: border-box;
+      margin-bottom: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea::placeholder {
+      color: #555;
+    }
+
+    .status-msg {
+      font-size: 11px;
+      margin-bottom: 8px;
+      display: block;
+      min-height: 14px;
+    }
+
+    .status-msg.resolving {
+      color: #f0ad4e;
+    }
+
+    .status-msg.success {
+      color: #5cb85c;
+    }
+
+    .status-msg.error {
+      color: #d9534f;
+    }
+
+    .sub-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      display: block;
+    }
   </style>
 </head>
 
@@ -191,6 +242,27 @@
         <input type="checkbox" id="redirectShorts">
       </div>
       <span class="hint">Opens /shorts/ URLs in the standard player</span>
+    </div>
+  </details>
+
+  <details>
+    <summary>Home Feed</summary>
+    <div class="content">
+      <div class="option">
+        <label>Curated Home Feed</label>
+        <input type="checkbox" id="customFeed">
+      </div>
+      <span class="hint">Replace YouTube's home feed with videos from channels you choose. Only works when "Block Home
+        Feed" is off.</span>
+
+      <span class="sub-label">Channels (one per line)</span>
+      <textarea id="customFeedWhitelist" placeholder="@3blue1brown&#10;@veritasium&#10;@numberphile"
+        rows="4"></textarea>
+      <span class="status-msg" id="whitelistStatus"></span>
+
+      <span class="sub-label">Blocked Channels (one per line)</span>
+      <textarea id="customFeedBlacklist" placeholder="@channel_to_hide" rows="3"></textarea>
+      <span class="status-msg" id="blacklistStatus"></span>
     </div>
   </details>
 

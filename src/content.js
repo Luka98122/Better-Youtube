@@ -38,6 +38,8 @@ function applyAllFeatures() {
 
   Features.updateShorts(State.settings);
 
+  Features.updateCustomFeed(State.settings);
+
   Features.updateLayout(State.settings);
 
   Features.injectToggleButton(State.settings, () => {

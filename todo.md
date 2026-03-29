@@ -3,7 +3,9 @@
 - [x] Make comments on sidebar scroll down infinitely
 - [x] Add a toggle wether to blur captions
 - [x] Figure out how to blur captions too.
-- [ ] Implement a feature to edit what you get on the home page, maybe only educational / user-whitelisted channels?
+- [x] Implement a feature to edit what you get on the home page, maybe only educational / user-whitelisted channels?
+- [ ] Rework the extension UI
+
 
 
 ## Bugs
