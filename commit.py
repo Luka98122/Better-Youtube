@@ -99,7 +99,7 @@ def main():
     username_safe = urllib.parse.quote(git_username).replace("-", "--")
 
     # Shields.io badges
-    badge_version = f"![Version](https://img.shields.io/badge/Version-v{version_safe}-green?style=for-the-badge)"
+    badge_version = f"![Version](https://img.shields.io/badge/Version-v{version_safe}-brightgreen?style=for-the-badge)"
     badge_date = f"![Date](https://img.shields.io/badge/Date-{date_safe}-blue?style=for-the-badge)"
     badge_user = f"![Committed By](https://img.shields.io/badge/Committed%20By-{username_safe}-blue?style=for-the-badge)"
     badge_test = f"![Tested](https://img.shields.io/badge/Tested-{test_text}-{test_color}?style=for-the-badge)"
