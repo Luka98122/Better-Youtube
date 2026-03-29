@@ -107,8 +107,8 @@ def main():
 
     badges_line = f"{badge_version} {badge_date} {badge_user} {badge_test} {badge_deploy}\n"
 
-    # Update readme.md
-    readme_path = "readme.md"
+    # Update README.md
+    readme_path = "README.md"
     try:
         with open(readme_path, "r") as f:
             lines = f.readlines()
@@ -124,9 +124,9 @@ def main():
         with open(readme_path, "w") as f:
             f.writelines(lines)
             
-        print("Updated readme.md with badges.")
+        print("Updated README.md with badges.")
     except Exception as e:
-        print(f"Error updating readme.md: {e}")
+        print(f"Error updating README.md: {e}")
 
     # Build final commit message
     final_message = f"{message}"
