@@ -11,7 +11,7 @@ const init = () => {
     chrome.storage.local.get(null, (res) => {
       State.settings = res || {};
       if (State.settings.blurRange === undefined) State.settings.blurRange = 20;
-      if (State.settings.isExtensionEnabled === undefined) State.settings.isExtensionEnabled = true;
+      if (State.settings.isBlurActive === undefined) State.settings.isBlurActive = true;
       applyAllFeatures();
     });
   }
@@ -43,8 +43,8 @@ function applyAllFeatures() {
   Features.updateLayout(State.settings);
 
   Features.injectToggleButton(State.settings, () => {
-    State.settings.isExtensionEnabled = !State.settings.isExtensionEnabled;
-    chrome.storage.local.set({ isExtensionEnabled: State.settings.isExtensionEnabled });
+    State.settings.isBlurActive = !State.settings.isBlurActive;
+    chrome.storage.local.set({ isBlurActive: State.settings.isBlurActive });
     State.isApplying = false;
     applyAllFeatures();
   });

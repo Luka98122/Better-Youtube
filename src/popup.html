@@ -304,6 +304,7 @@
     <button class="tab-btn active" data-tab="tab-blur">General</button>
     <button class="tab-btn" data-tab="tab-layout">Layout</button>
     <button class="tab-btn" data-tab="tab-feed">Feed</button>
+    <button id="debugTabBtn" class="tab-btn" data-tab="tab-debug" style="display: none;">Debug</button>
   </div>
 
   <!-- BLUR & DISPLAY TAB -->
@@ -311,11 +312,11 @@
     <div class="card">
       <div class="option">
         <div class="option-header">
-          <label for="isExtensionEnabled">Blur Unfocused</label>
+          <label for="isBlurActive">Blur Unfocused</label>
           <span class="hint">Auto-blur video when window is not focused</span>
         </div>
         <label class="switch">
-          <input type="checkbox" id="isExtensionEnabled">
+          <input type="checkbox" id="isBlurActive">
           <span class="slider"></span>
         </label>
       </div>
@@ -457,8 +458,36 @@
       <span class="status-msg" id="whitelistStatus"></span>
 
       <span class="sub-label">Blocked Channels</span>
-      <textarea id="customFeedBlacklist" placeholder="@channel_to_hide"></textarea>
-      <span class="status-msg" id="blacklistStatus"></span>
+    </div>
+  </div>
+
+  <!-- DEBUG TAB -->
+  <div id="tab-debug" class="tab-content">
+    <div class="card">
+      <div class="option-header" style="margin-bottom: 12px;">
+        <label>Diagnostic Tools</label>
+        <span class="hint">Use these to backup or reproduce extension states.</span>
+      </div>
+
+      <button id="exportSettings"
+        style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text); border-radius: 8px; cursor: pointer; margin-bottom: 12px; font-weight: 500; transition: background 0.2s;">
+        Export State (JSON)
+      </button>
+
+      <div style="margin-bottom: 12px;">
+        <span class="hint" style="display: block; margin-bottom: 4px;">Paste state to import:</span>
+        <textarea id="importText" placeholder='{"isBlurActive": true, ...}'
+          style="min-height: 100px; margin-top: 0;"></textarea>
+        <button id="importSettings"
+          style="width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s;">
+          Import State
+        </button>
+      </div>
+
+      <button id="resetSettings"
+        style="width: 100%; padding: 10px; background: transparent; border: 1px solid #d9534f; color: #d9534f; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s;">
+        Reset to Defaults
+      </button>
     </div>
   </div>
 

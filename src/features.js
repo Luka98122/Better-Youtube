@@ -5,7 +5,7 @@ const Features = {
     if (!video) return;
 
     const isHidden = document.hidden || !document.hasFocus();
-    const shouldBlur = isHidden && settings.isExtensionEnabled && settings.blurRange > 0;
+    const shouldBlur = isHidden && settings.isBlurActive && settings.blurRange > 0;
 
     let filters = [];
     if (shouldBlur) filters.push(`blur(${settings.blurRange}px)`);
@@ -186,8 +186,8 @@ const Features = {
 
     const existingBtn = document.getElementById('autoblur-toggle-btn');
     if (existingBtn) {
-      existingBtn.style.backgroundColor = settings.isExtensionEnabled ? activeBg : inactiveBg;
-      existingBtn.innerText = `Blur: ${settings.isExtensionEnabled ? 'ON' : 'OFF'}`;
+      existingBtn.style.backgroundColor = settings.isBlurActive ? activeBg : inactiveBg;
+      existingBtn.innerText = `Blur: ${settings.isBlurActive ? 'ON' : 'OFF'}`;
       return;
     }
 
@@ -200,7 +200,7 @@ const Features = {
     btnContainer.innerHTML = `
       <button id="autoblur-toggle-btn" class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal" 
         style="border-radius: 18px; padding: 0 16px; height: 36px; border: none; cursor: pointer; color: #fff; font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 500; transition: background-color 0.2s ease;">
-        Blur: ${settings.isExtensionEnabled ? 'ON' : 'OFF'}
+        Blur: ${settings.isBlurActive ? 'ON' : 'OFF'}
       </button>
     `;
     btnContainer.querySelector('#autoblur-toggle-btn').onclick = onToggle;

@@ -38,6 +38,22 @@ To keep the codebase clean and maintainable, please follow these simple rules:
 * **Document Your Code:** Add comments to explain complex logic.
 * **Respect Privacy:** Better-YouTube should never collect user data. Any feature that requires external communication must be clearly disclosed.
 
+## 🛠️ Debug Mode & Diagnostics
+
+If you need to reproduce an error or backup your settings, use the built-in diagnostic tools:
+
+1.  Open the extension popup.
+2.  **Activation**: Click on the **"Better YouTube"** title at the top **5 times** in quick succession.
+3.  A **Debug** tab will appear.
+4.  Use **Export State** to generate a JSON file of your current configuration.
+5.  Use **Import State** to load a JSON configuration (handy for debugging user-reported issues).
+6.  **Reset to Defaults** will wipe all local storage for the extension.
+
+> [!NOTE]
+> When reporting bugs, attaching an exported state JSON is extremely helpful for maintainers.
+
+## Development Notes
+
 ## Licensing
 
 By contributing to **Better-YouTube**, you agree that your contributions will be licensed under the project's [MIT License](LICENSE). 

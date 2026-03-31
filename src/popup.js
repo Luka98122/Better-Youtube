@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-const checkboxElements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isExtensionEnabled', 'disableHomeOverride', 'blackAndWhite', 'blurCaptions', 'hideShorts', 'redirectShorts', 'customFeed', 'showNormalFeed'];
+const checkboxElements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isBlurActive', 'disableHomeOverride', 'blackAndWhite', 'blurCaptions', 'hideShorts', 'redirectShorts', 'customFeed', 'showNormalFeed'];
 const textareaElements = ['customFeedWhitelist', 'customFeedBlacklist'];
 const allElements = [...checkboxElements, ...textareaElements, 'customFeedChannels', 'customFeedBlacklistChannels'];
 
@@ -27,7 +27,7 @@ chrome.storage.local.get(allElements, (res) => {
     const el = document.getElementById(id);
     if (!el) return;
     if (el.type === 'checkbox') {
-      el.checked = res[id] !== undefined ? res[id] : (id === 'isExtensionEnabled');
+      el.checked = res[id] !== undefined ? res[id] : (id === 'isBlurActive');
     } else {
       el.value = res[id] || 20;
       if (id === 'blurRange') document.getElementById('blurValDisplay').innerText = el.value;
@@ -147,6 +147,66 @@ function resolveAndSave(text, channelsKey, statusId) {
 
 setupTextarea('customFeedWhitelist', 'customFeedWhitelist', 'customFeedChannels', 'whitelistStatus');
 setupTextarea('customFeedBlacklist', 'customFeedBlacklist', 'customFeedBlacklistChannels', 'blacklistStatus');
+
+// --- DEBUG TOOLS & SECRET ACTIVATION ---
+let clickCount = 0;
+let clickTimer = null;
+
+const title = document.querySelector('h3');
+if (title) {
+  title.addEventListener('click', () => {
+    clickCount++;
+    clearTimeout(clickTimer);
+
+    if (clickCount >= 5) {
+      const debugBtn = document.getElementById('debugTabBtn');
+      if (debugBtn) {
+        debugBtn.style.display = 'block';
+        debugBtn.click(); // Automatically switch to it
+      }
+      clickCount = 0;
+    } else {
+      clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
+    }
+  });
+}
+
+// Export State
+document.getElementById('exportSettings').addEventListener('click', () => {
+  chrome.storage.local.get(null, (allData) => {
+    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `better-youtube-state-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+});
+
+// Import State
+document.getElementById('importSettings').addEventListener('click', () => {
+  const text = document.getElementById('importText').value;
+  try {
+    const data = JSON.parse(text);
+    chrome.storage.local.set(data, () => {
+      alert('State imported successfully! Reloading...');
+      window.location.reload();
+    });
+  } catch (e) {
+    alert('Invalid JSON! Please check the format.');
+  }
+});
+
+// Reset State
+document.getElementById('resetSettings').addEventListener('click', () => {
+  if (confirm('Are you sure you want to reset ALL settings? This cannot be undone.')) {
+    chrome.storage.local.clear(() => {
+      alert('Settings reset! Reloading...');
+      window.location.reload();
+    });
+  }
+});
 
 // Self-Close & Focus logic
 function checkFocus() {
