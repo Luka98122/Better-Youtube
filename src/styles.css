@@ -374,7 +374,7 @@ body.hide-recs-shorts yt-lockup-view-model:has(a[href*="/shorts/"]) {
   color: var(--yt-spec-text-secondary, #aaa);
 }
 
-.custom-feed-views::before {
+.custom-feed-views::after {
   content: '·';
   margin: 0 4px;
 }

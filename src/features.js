@@ -452,8 +452,8 @@ const Features = {
                   ${verifiedBadge}
                 </div>
                 <div class="custom-feed-metadata">
-                  <span class="custom-feed-time">${timeAgo(v.published)}</span>
                   ${v.views ? `<span class="custom-feed-views">${formatViews(v.views)} views</span>` : ''}
+                  <span class="custom-feed-time">${timeAgo(v.published)}</span>
                 </div>
               </div>
             </div>
@@ -590,6 +590,6 @@ function timeAgo(dateStr) {
 
 function formatViews(num) {
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  if (num >= 1_000) return Math.floor(num / 1_000) + 'K';
   return num.toString();
 }
