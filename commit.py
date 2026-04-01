@@ -59,6 +59,14 @@ def main():
         except ValueError:
             print("Warning: version format invalid. Could not increment.")
 
+    # Get git status and stats
+    try:
+        git_status = subprocess.check_output(["git", "status", "-s"], text=True).strip()
+        git_stats = subprocess.check_output(["git", "diff", "HEAD", "--stat"], text=True).strip()
+    except Exception:
+        git_status = "Error getting status"
+        git_stats = ""
+
     print("\n--- Summary ---")
     print(f"Commit Message: {message}")
     print(f"Tested: {test_text}")
@@ -67,6 +75,15 @@ def main():
         print(f"Version Change: {version} -> {new_version}")
     else:
         print(f"Version: {version} (No change)")
+    
+    print("\nChanges:")
+    if git_status:
+        print(git_status)
+    else:
+        print("No changes staged/unstaged.")
+        
+    if git_stats:
+        print(f"\nStats:\n{git_stats}")
 
     try:
         confirm = input("\nDoes everything seem correct? (y/n): ").strip().lower()
