@@ -442,6 +442,7 @@ const Features = {
           <a href="/watch?v=${v.videoId}" class="custom-feed-card">
             <div class="custom-feed-thumbnail-wrap">
               <img class="custom-feed-thumbnail" src="${v.thumbnail}" alt="" loading="lazy">
+              ${v.duration ? `<span class="custom-feed-duration">${v.duration}</span>` : ''}
             </div>
             <div class="custom-feed-info">
               <img class="custom-feed-avatar" src="${avatarUrl}" alt="">

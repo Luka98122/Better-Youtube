@@ -19,4 +19,5 @@
 - [x] Toggling hide recommended videos doesn't hide recommended videos if comments are on the sidebar.
 - [ ] Refactor: Remove inline css
 - [ ] Custom feed shows normal feed categories at top
-- [ ] Custom feed videos do not display lengths 
+- [x] Custom feed videos do not display durations 
+- [ ] Custom feed takes ~5 seconds to load first time due to durations

@@ -136,6 +136,62 @@ function shuffleArray(arr) {
   return shuffled;
 }
 
+// Extract a video's duration from its page metadata
+async function fetchVideoDuration(videoId) {
+  // Check special cache for durations to avoid redundant fetches
+  const cacheKey = `dur_${videoId}`;
+  try {
+    const cached = await chrome.storage.local.get(cacheKey);
+    if (cached[cacheKey]) return cached[cacheKey];
+  } catch (e) { }
+
+  const url = `https://www.youtube.com/watch?v=${videoId}`;
+  try {
+    // We add a few headers and omit credentials to look like a clean request
+    const resp = await fetch(url, { credentials: 'omit' });
+    if (!resp.ok) return null;
+    const html = await resp.text();
+
+    // Fallback order: lengthSeconds -> itemprop="duration"
+    let seconds = null;
+    let lengthMatch = html.match(/"lengthSeconds":"(\d+)"/);
+    if (lengthMatch) {
+      seconds = parseInt(lengthMatch[1], 10);
+    } else {
+      const isoMatch = html.match(/itemprop="duration"\s+content="PT([^"]+)"/);
+      if (isoMatch) {
+        const raw = isoMatch[1];
+        const h = raw.match(/(\d+)H/)?.[1] || 0;
+        const m = raw.match(/(\d+)M/)?.[1] || 0;
+        const s = raw.match(/(\d+)S/)?.[1] || 0;
+        seconds = (parseInt(h, 10) * 3600) + (parseInt(m, 10) * 60) + parseInt(s, 10);
+      }
+    }
+
+    if (seconds === null || isNaN(seconds)) return null;
+
+    const formatted = formatDuration(seconds);
+
+    // Cache the duration (it never changes)
+    chrome.storage.local.set({ [cacheKey]: formatted });
+    return formatted;
+  } catch (e) {
+    console.warn('[BetterYT] Failed to fetch duration for video:', videoId, e);
+    return null;
+  }
+}
+
+function formatDuration(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 function decodeXMLEntities(str) {
   return str
     .replace(/&amp;/g, '&')
@@ -166,6 +222,18 @@ async function fetchFeeds(channelIds, blacklistIds) {
       const blackSet = new Set(blacklistIds);
       videos = videos.filter(v => !blackSet.has(v.channelId));
     }
+
+    // Fetch missing durations for all videos in the feed if any are missing
+    const missingDurations = videos.filter(v => !v.duration);
+    if (missingDurations.length > 0) {
+      for (let i = 0; i < missingDurations.length; i += MAX_CONCURRENT_FETCHES) {
+        const batch = missingDurations.slice(i, i + MAX_CONCURRENT_FETCHES);
+        await Promise.all(batch.map(async (v) => {
+          v.duration = await fetchVideoDuration(v.videoId);
+        }));
+      }
+    }
+
     return shuffleArray(videos);
   }
 
@@ -179,6 +247,14 @@ async function fetchFeeds(channelIds, blacklistIds) {
 
   // Sort by published date (newest first)
   allVideos.sort((a, b) => new Date(b.published) - new Date(a.published));
+
+  // Fetch missing durations for all videos (highly cached, so efficiency is okay)
+  for (let i = 0; i < allVideos.length; i += MAX_CONCURRENT_FETCHES) {
+    const batch = allVideos.slice(i, i + MAX_CONCURRENT_FETCHES);
+    await Promise.all(batch.map(async (v) => {
+      if (!v.duration) v.duration = await fetchVideoDuration(v.videoId);
+    }));
+  }
 
   // Cache the results (before blacklist filtering, so cache is reusable)
   try {
