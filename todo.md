@@ -21,3 +21,4 @@
 - [ ] Custom feed shows normal feed categories at top
 - [x] Custom feed videos do not display durations 
 - [ ] Custom feed takes ~5 seconds to load first time due to durations
+- [x] 90% Of the YouTube home page sidebar disappears - oopsie

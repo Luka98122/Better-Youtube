@@ -453,11 +453,21 @@
         </label>
       </div>
 
+      <div class="option" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <div class="option-header" style="width: 100%;">
+          <label style="font-size: 13px;">Active Feed</label>
+          <div style="display:flex; margin-top: 6px; gap: 6px; align-items: stretch; height: 26px;">
+             <select id="feedSelector" style="flex:1; background:rgba(0,0,0,0.3); color:var(--text); border:1px solid var(--border-color); border-radius: 4px; padding: 0 4px; outline: none; font-size: 12px; font-family: inherit;"></select>
+             <button id="addFeedBtn" title="Add Feed" style="width: 26px; background:rgba(255,255,255,0.1); border:none; color:var(--text); border-radius: 4px; cursor: pointer;">+</button>
+             <button id="renameFeedBtn" title="Rename Feed" style="width: 26px; background:rgba(255,255,255,0.1); border:none; color:var(--text); border-radius: 4px; cursor: pointer;">✎</button>
+             <button id="deleteFeedBtn" title="Delete Feed" style="width: 26px; background:rgba(255,0,0,0.3); border:none; color:var(--text); border-radius: 4px; cursor: pointer;">-</button>
+          </div>
+        </div>
+      </div>
+
       <span class="sub-label">Allowed Channels</span>
       <textarea id="customFeedWhitelist" placeholder="@3blue1brown&#10;@veritasium"></textarea>
       <span class="status-msg" id="whitelistStatus"></span>
-
-      <span class="sub-label">Blocked Channels</span>
     </div>
   </div>
 

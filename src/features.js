@@ -217,7 +217,7 @@ const Features = {
   updateCustomFeed: (settings) => {
     const homeBrowse = document.querySelector('ytd-browse[page-subtype="home"]');
     const feedContainerId = 'custom-feed-container';
-    const existingContainer = document.getElementById(feedContainerId);
+    let existingContainer = document.getElementById(feedContainerId);
 
     // Should the custom feed be active?
     const shouldBeActive = !settings.hideHome && !!settings.customFeed && homeBrowse;
@@ -253,15 +253,56 @@ const Features = {
       return;
     }
 
-    // We need channels to show
-    const channels = settings.customFeedChannels;
-    if (!channels || Object.keys(channels).length === 0) {
+    // Migration
+    if (!settings.customFeeds) {
+      settings.customFeeds = [{
+        id: 'default',
+        name: 'Main Feed',
+        whitelist: settings.customFeedWhitelist || '',
+        channels: settings.customFeedChannels || {}
+      }];
+    }
+    const feeds = settings.customFeeds;
+    const activeFeedId = settings.activeFeedId || feeds[0].id;
+    const activeFeed = feeds.find(f => f.id === activeFeedId) || feeds[0];
+    const activeIndex = feeds.findIndex(f => f.id === activeFeedId);
+
+    const attachTabHandlers = (container) => {
+      const btns = container.querySelectorAll('.custom-feed-tab-btn');
+      btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          chrome.storage.local.set({ activeFeedId: btn.dataset.id });
+        });
+      });
+    };
+
+    const renderTabs = () => {
+      return `
+        <div class="custom-feed-tabs" style="display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;">
+          ${feeds.map(f => `
+            <button class="custom-feed-tab-btn ${f.id === activeFeedId ? 'active' : ''}" data-id="${f.id}" style="padding: 8px 16px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.1); background: ${f.id === activeFeedId ? 'var(--yt-spec-text-primary)' : 'rgba(255,255,255,0.05)'}; color: ${f.id === activeFeedId ? 'var(--yt-spec-base-background)' : 'var(--yt-spec-text-primary)'}; cursor: pointer; font-weight: 500; font-family: 'Roboto', sans-serif; outline: none; transition: all 0.2s;">
+              ${escapeHTML(f.name)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    };
+
+    const channels = activeFeed.channels || {};
+    if (Object.keys(channels).length === 0) {
       // Show empty state
       if (!existingContainer) {
-        const container = document.createElement('div');
-        container.id = feedContainerId;
-        container.innerHTML = `
-          <div class="custom-feed-empty">
+        existingContainer = document.createElement('div');
+        existingContainer.id = feedContainerId;
+        homeBrowse.prepend(existingContainer);
+      }
+
+      const emptyStateKey = 'empty|' + activeFeedId;
+      if (Features._customFeedState.renderedKey === emptyStateKey) return;
+      Features._customFeedState.renderedKey = emptyStateKey;
+
+      existingContainer.innerHTML = renderTabs() + `
+        <div class="custom-feed-empty">
             <div class="custom-feed-empty-icon">📺</div>
             <h2>Your Curated Feed</h2>
             <p style="margin-bottom: 24px;">Your feed is currently empty. Add channel handles below to start seeing their latest videos.</p>
@@ -276,65 +317,62 @@ const Features = {
             </div>
           </div>
         `;
-        homeBrowse.prepend(container);
+      attachTabHandlers(existingContainer);
 
-        const saveBtn = document.getElementById('in-page-save-btn');
-        const inputArea = document.getElementById('in-page-channel-input');
-        const statusMsg = document.getElementById('in-page-status');
+      const saveBtn = document.getElementById('in-page-save-btn');
+      const inputArea = document.getElementById('in-page-channel-input');
+      const statusMsg = document.getElementById('in-page-status');
 
-        if (saveBtn && inputArea && statusMsg) {
-          saveBtn.addEventListener('click', () => {
-            const text = inputArea.value;
-            const handles = text.split('\n').map(h => h.trim()).filter(h => h.length > 0);
+      if (saveBtn && inputArea && statusMsg) {
+        saveBtn.addEventListener('click', () => {
+          const text = inputArea.value;
+          const handles = text.split('\n').map(h => h.trim()).filter(h => h.length > 0);
 
-            if (handles.length === 0) {
-              statusMsg.textContent = 'Please enter at least one channel handle.';
-              statusMsg.style.color = '#d9534f';
-              return;
-            }
+          if (handles.length === 0) {
+            statusMsg.textContent = 'Please enter at least one channel handle.';
+            statusMsg.style.color = '#d9534f';
+            return;
+          }
 
-            saveBtn.disabled = true;
-            statusMsg.textContent = 'Resolving channels...';
-            statusMsg.style.color = '#f0ad4e';
+          saveBtn.disabled = true;
+          statusMsg.textContent = 'Resolving channels...';
+          statusMsg.style.color = '#f0ad4e';
 
-            // Resolve handles via background service worker
-            if (!chrome.runtime || !chrome.runtime.sendMessage) {
-              statusMsg.textContent = 'Extension updated. Please refresh the page.';
+          // Resolve handles via background service worker
+          if (!chrome.runtime || !chrome.runtime.sendMessage) {
+            statusMsg.textContent = 'Extension updated. Please refresh the page.';
+            statusMsg.style.color = '#d9534f';
+            saveBtn.disabled = false;
+            return;
+          }
+
+          chrome.runtime.sendMessage({ type: 'resolveChannels', handles }, (response) => {
+            if (chrome.runtime.lastError || !response || !response.success) {
+              statusMsg.textContent = 'Failed to connect. Try again.';
               statusMsg.style.color = '#d9534f';
               saveBtn.disabled = false;
               return;
             }
 
-            chrome.runtime.sendMessage({ type: 'resolveChannels', handles }, (response) => {
-              if (chrome.runtime.lastError || !response || !response.success) {
-                statusMsg.textContent = 'Failed to connect. Try again.';
-                statusMsg.style.color = '#d9534f';
-                saveBtn.disabled = false;
-                return;
-              }
+            const resolved = response.channels;
+            const foundCount = Object.keys(resolved).length;
 
-              const resolved = response.channels;
-              const foundCount = Object.keys(resolved).length;
+            if (foundCount === 0) {
+              statusMsg.textContent = 'None of the channels were found. Check spelling.';
+              statusMsg.style.color = '#d9534f';
+              saveBtn.disabled = false;
+              return;
+            }
 
-              if (foundCount === 0) {
-                statusMsg.textContent = 'None of the channels were found. Check spelling.';
-                statusMsg.style.color = '#d9534f';
-                saveBtn.disabled = false;
-                return;
-              }
+            settings.customFeeds[activeIndex].whitelist = text;
+            settings.customFeeds[activeIndex].channels = resolved;
 
-              // Update storage with the raw text and resolved IDs
-              // The storage listener in content.js will automatically trigger a re-render
-              chrome.storage.local.set({
-                customFeedWhitelist: text,
-                customFeedChannels: resolved
-              }, () => {
-                statusMsg.textContent = `Added ${foundCount} channels. Loading feed...`;
-                statusMsg.style.color = '#5cb85c';
-              });
+            chrome.storage.local.set({ customFeeds: settings.customFeeds }, () => {
+              statusMsg.textContent = `Added ${foundCount} channels. Loading feed...`;
+              statusMsg.style.color = '#5cb85c';
             });
           });
-        }
+        });
       }
       return;
     }
@@ -353,7 +391,7 @@ const Features = {
     }
     const blacklistChannels = settings.customFeedBlacklistChannels || {};
     const blacklistIds = Object.values(blacklistChannels).map(b => typeof b === 'string' ? b : b.id);
-    const fetchKey = whitelistIds.join(',') + '|' + blacklistIds.join(',');
+    const fetchKey = activeFeedId + '|' + whitelistIds.join(',') + '|' + blacklistIds.join(',');
 
     // Don't re-fetch if we already rendered this exact config
     if (Features._customFeedState.renderedKey === fetchKey && existingContainer) return;
@@ -363,16 +401,18 @@ const Features = {
 
     // Show loading state
     if (!existingContainer) {
-      const container = document.createElement('div');
-      container.id = feedContainerId;
-      container.innerHTML = `
-        <div class="custom-feed-loading">
-          <div class="custom-feed-spinner"></div>
-          <p>Loading your curated feed...</p>
-        </div>
-      `;
-      homeBrowse.prepend(container);
+      existingContainer = document.createElement('div');
+      existingContainer.id = feedContainerId;
+      homeBrowse.prepend(existingContainer);
     }
+
+    existingContainer.innerHTML = renderTabs() + `
+      <div class="custom-feed-loading">
+        <div class="custom-feed-spinner"></div>
+        <p>Loading your curated feed...</p>
+      </div>
+    `;
+    attachTabHandlers(existingContainer);
 
     // Fetch the feed
     Features._customFeedState.isLoading = true;
@@ -393,13 +433,14 @@ const Features = {
           console.warn('[BetterYT] Feed fetch failed:', chrome.runtime.lastError || response?.error);
           const container = document.getElementById(feedContainerId);
           if (container) {
-            container.innerHTML = `
+            container.innerHTML = renderTabs() + `
               <div class="custom-feed-empty">
                 <div class="custom-feed-empty-icon">⚠️</div>
                 <h2>Feed Unavailable</h2>
                 <p>Couldn't load your curated feed. Try refreshing the page.</p>
               </div>
             `;
+            attachTabHandlers(container);
           }
           return;
         }
@@ -410,18 +451,19 @@ const Features = {
         if (!container) return;
 
         if (videos.length === 0) {
-          container.innerHTML = `
+          container.innerHTML = renderTabs() + `
             <div class="custom-feed-empty">
               <div class="custom-feed-empty-icon">📭</div>
               <h2>No Videos Found</h2>
               <p>The channels in your list haven't posted recently, or couldn't be reached.</p>
             </div>
           `;
+          attachTabHandlers(container);
           return;
         }
 
         // Render the video grid
-        const header = `
+        const header = renderTabs() + `
           <div class="custom-feed-header">
             <h2>Your Feed</h2>
             <button id="custom-feed-refresh" title="Refresh feed">↻</button>
@@ -473,6 +515,7 @@ const Features = {
         `;
 
         container.innerHTML = header + `<div class="custom-feed-grid">${cards}</div>` + footerForm;
+        attachTabHandlers(container);
 
         // Refresh button handler
         const refreshBtn = container.querySelector('#custom-feed-refresh');
@@ -538,15 +581,17 @@ const Features = {
               }
 
               // Merge with existing whitelist
-              const existingWhitelistStr = settings.customFeedWhitelist || '';
-              const existingChannelsObj = settings.customFeedChannels || {};
+              const existingWhitelistStr = activeFeed.whitelist || '';
+              const existingChannelsObj = activeFeed.channels || {};
 
               const mergedText = (existingWhitelistStr + '\n' + newText).trim();
               const mergedResolved = Object.assign({}, existingChannelsObj, resolved);
 
+              settings.customFeeds[activeIndex].whitelist = mergedText;
+              settings.customFeeds[activeIndex].channels = mergedResolved;
+
               chrome.storage.local.set({
-                customFeedWhitelist: mergedText,
-                customFeedChannels: mergedResolved
+                customFeeds: settings.customFeeds
               }, () => {
                 addStatus.textContent = `Added ${foundCount} channels. Reloading...`;
                 addStatus.style.color = '#5cb85c';

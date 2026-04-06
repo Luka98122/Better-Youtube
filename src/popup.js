@@ -18,8 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const checkboxElements = ['blurRange', 'hideHome', 'hideSidebar', 'swapComments', 'isBlurActive', 'disableHomeOverride', 'blackAndWhite', 'blurCaptions', 'hideShorts', 'redirectShorts', 'customFeed', 'showNormalFeed'];
-const textareaElements = ['customFeedWhitelist', 'customFeedBlacklist'];
-const allElements = [...checkboxElements, ...textareaElements, 'customFeedChannels', 'customFeedBlacklistChannels'];
+const allElements = [...checkboxElements, 'customFeeds', 'activeFeedId', 'customFeedWhitelist', 'customFeedChannels', 'customFeedBlacklist', 'customFeedBlacklistChannels'];
+
+let customFeeds = [];
+let activeFeedId = null;
 
 // 1. Initial Load
 chrome.storage.local.get(allElements, (res) => {
@@ -34,17 +36,43 @@ chrome.storage.local.get(allElements, (res) => {
     }
   });
 
-  // Load textareas
-  textareaElements.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = res[id] || '';
-  });
+  if (!res.customFeeds) {
+    customFeeds = [{
+      id: 'default',
+      name: 'Main Feed',
+      whitelist: res.customFeedWhitelist || '',
+      channels: res.customFeedChannels || {}
+    }];
+    activeFeedId = 'default';
+    chrome.storage.local.set({ customFeeds, activeFeedId });
+  } else {
+    customFeeds = res.customFeeds;
+    activeFeedId = res.activeFeedId || customFeeds[0].id;
+  }
 
-  // Show resolved channel counts
-  updateStatusDisplay('whitelistStatus', res.customFeedChannels);
-  updateStatusDisplay('blacklistStatus', res.customFeedBlacklistChannels);
+  renderFeedSelector();
+  loadFeedData();
 });
+
+function renderFeedSelector() {
+  const sel = document.getElementById('feedSelector');
+  if (!sel) return;
+  sel.innerHTML = '';
+  customFeeds.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = f.name;
+    if (f.id === activeFeedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function loadFeedData() {
+  const feed = customFeeds.find(f => f.id === activeFeedId);
+  const el = document.getElementById('customFeedWhitelist');
+  if (el) el.value = feed ? feed.whitelist : '';
+  updateStatusDisplay('whitelistStatus', feed ? feed.channels : {});
+}
 
 function updateStatusDisplay(statusId, channelsObj) {
   const statusEl = document.getElementById(statusId);
@@ -78,34 +106,80 @@ if (slider) {
   };
 }
 
-// 4. Textarea Listeners (with debounce + channel resolution)
-let debounceTimers = {};
+// 4. Multiple Feeds & Textarea Listeners
+document.getElementById('feedSelector')?.addEventListener('change', (e) => {
+  activeFeedId = e.target.value;
+  chrome.storage.local.set({ activeFeedId });
+  loadFeedData();
+  const el = document.getElementById('customFeedWhitelist');
+  if (el) el.focus();
+});
 
-function setupTextarea(textareaId, storageKey, channelsKey, statusId) {
-  const el = document.getElementById(textareaId);
-  if (!el) return;
+document.getElementById('addFeedBtn')?.addEventListener('click', () => {
+  const name = prompt('Enter new feed name:');
+  if (!name) return;
+  const newFeed = {
+    id: Date.now().toString(),
+    name: name,
+    whitelist: '',
+    channels: {}
+  };
+  customFeeds.push(newFeed);
+  activeFeedId = newFeed.id;
+  chrome.storage.local.set({ customFeeds, activeFeedId });
+  renderFeedSelector();
+  loadFeedData();
+});
 
-  el.addEventListener('input', () => {
-    // Save raw text immediately
-    chrome.storage.local.set({ [storageKey]: el.value });
+document.getElementById('renameFeedBtn')?.addEventListener('click', () => {
+  const feed = customFeeds.find(f => f.id === activeFeedId);
+  if (!feed) return;
+  const name = prompt('Enter new feed name:', feed.name);
+  if (name && name !== feed.name) {
+    feed.name = name;
+    chrome.storage.local.set({ customFeeds });
+    renderFeedSelector();
+  }
+});
 
-    // Debounce the channel resolution
-    clearTimeout(debounceTimers[textareaId]);
-    debounceTimers[textareaId] = setTimeout(() => {
-      resolveAndSave(el.value, channelsKey, statusId);
+document.getElementById('deleteFeedBtn')?.addEventListener('click', () => {
+  if (customFeeds.length <= 1) {
+    alert("You cannot delete the last feed.");
+    return;
+  }
+  if (!confirm('Delete this feed?')) return;
+  customFeeds = customFeeds.filter(f => f.id !== activeFeedId);
+  activeFeedId = customFeeds[0].id;
+  chrome.storage.local.set({ customFeeds, activeFeedId });
+  renderFeedSelector();
+  loadFeedData();
+});
+
+let debounceTimer = null;
+const whitelistArea = document.getElementById('customFeedWhitelist');
+
+if (whitelistArea) {
+  whitelistArea.addEventListener('input', () => {
+    const feedIndex = customFeeds.findIndex(f => f.id === activeFeedId);
+    if (feedIndex === -1) return;
+
+    customFeeds[feedIndex].whitelist = whitelistArea.value;
+    chrome.storage.local.set({ customFeeds });
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      resolveAndSaveFeed(whitelistArea.value, feedIndex);
     }, 800);
   });
 }
 
-function resolveAndSave(text, channelsKey, statusId) {
-  const statusEl = document.getElementById(statusId);
-  const handles = text
-    .split('\n')
-    .map(h => h.trim())
-    .filter(h => h.length > 0);
+function resolveAndSaveFeed(text, feedIndex) {
+  const statusEl = document.getElementById('whitelistStatus');
+  const handles = text.split('\n').map(h => h.trim()).filter(h => h.length > 0);
 
   if (handles.length === 0) {
-    chrome.storage.local.set({ [channelsKey]: {} });
+    customFeeds[feedIndex].channels = {};
+    chrome.storage.local.set({ customFeeds });
     if (statusEl) {
       statusEl.textContent = '';
       statusEl.className = 'status-msg';
@@ -128,7 +202,11 @@ function resolveAndSave(text, channelsKey, statusId) {
     }
 
     const resolved = response.channels;
-    chrome.storage.local.set({ [channelsKey]: resolved });
+
+    if (customFeeds[feedIndex]) {
+      customFeeds[feedIndex].channels = resolved;
+      chrome.storage.local.set({ customFeeds });
+    }
 
     if (statusEl) {
       const total = handles.length;
@@ -144,9 +222,6 @@ function resolveAndSave(text, channelsKey, statusId) {
     }
   });
 }
-
-setupTextarea('customFeedWhitelist', 'customFeedWhitelist', 'customFeedChannels', 'whitelistStatus');
-setupTextarea('customFeedBlacklist', 'customFeedBlacklist', 'customFeedBlacklistChannels', 'blacklistStatus');
 
 // --- DEBUG TOOLS & SECRET ACTIVATION ---
 let clickCount = 0;
